@@ -1,0 +1,235 @@
+"WITH ctept
+     AS (SELECT MIN(RowNumber) RowNumber, 
+                pt_domain, 
+                pt_site, 
+                pt_part, 
+                sct_cst_tot
+         FROM
+         (
+             SELECT 1 RowNumber, 
+                    pt_domain, 
+                    pt_site, 
+                    pt_part, 
+                    sct_cst_tot
+             FROM anx_det
+                  JOIN pt_mstr ON pt_domain = anx_domain
+                                  AND pt_part = anx_node
+                  LEFT JOIN sct_det sct(NOLOCK) ON sct_domain = pt_domain
+                                                   AND sct_sim = 'STANDARD'
+                                                   AND sct_part = pt_part
+                                                   AND sct_site = pt_site
+                                                   AND anx_type = '6'
+             UNION ALL
+             SELECT 2 RowNumber, 
+                    pt_domain, 
+                    pt_site, 
+                    pt_part, 
+                    sct_cst_tot
+             FROM pt_mstr pt(NOLOCK)
+                  LEFT JOIN sct_det sct(NOLOCK) ON sct_domain = pt_domain
+                                                   AND sct_sim = 'STANDARD'
+                                                   AND sct_part = pt_part
+                                                   AND sct_site = pt_site
+         ) x
+         GROUP BY pt_domain, 
+                  pt_site, 
+                  pt_part, 
+                  sct_cst_tot)
+     SELECT DISTINCT 
+            p.pi_domain DomainCode, 
+            cph_year, 
+            p.pi_list PriceList, 
+            p.pi_desc PriceListDescription, 
+            p.pi_cs_code CustSupplierCat, 
+            cm_sort CustomerName, 
+            cm.cm_slspsn_ex1 SalespersonCode, 
+            a.ad_name SalesPersonName, 
+            cm.cm_region Region, 
+            p.pi_part_code ItemCat, 
+            pt.pt_desc1 ItemDescription1, 
+            pt.pt_desc2 ItemDescription2, 
+            p.pi_start StartDate, 
+            p.pi_expire ExpireDate, 
+            pi_comb_type ComboType, 
+            pt_price ListPrice, 
+            pid_qty MinQty, 
+            pid_amt NetPrice, 
+            pi_amt_type AmountType, 
+            --pi_um UnitOfMeasure, 
+            pt.pt_um UnitOfMeasure, 
+            pi_curr Currency, 
+            cph_tot_qty YTDQuantity, 
+            cph_tot_sale YTDSales, 
+            [BusinessRelationCode] OwnerId, 
+            [BusinessRelationName1] OwnerName, 
+            sct_cst_tot StandardCost,
+            CASE
+                WHEN pid_amt <> 0
+                THEN((pid_amt - sct_cst_tot) / pid_amt) * 100
+            END MarginPct,
+            CASE
+                WHEN ct.ContType IS NULL
+                THEN 'PPA-Local'
+                ELSE ct.ContType
+            END ContractType,
+            CASE
+                WHEN ct.ContOwner IS NULL
+                THEN 'PPA-Local'
+                ELSE ct.ContOwner
+            END ContractName,
+            CASE
+                WHEN coname.code_cmmt IS NULL
+                THEN 'PPA-Local'
+                ELSE coname.code_cmmt
+            END ContractOwnerName, 
+            cm.cm_slspsn_ex1 TMCode, 
+            cm.cm_slspsn_ex2 VCCode
+     FROM [dbo].[pi_mstr] p(NOLOCK)
+          LEFT JOIN pid_det pd(NOLOCK) ON p.pi_domain = pd.pid_domain
+                                          AND p.pi_list_id = pd.pid_list_id
+          LEFT JOIN cm_mstr cm(NOLOCK) ON p.pi_domain = cm.cm_domain
+                                          AND p.pi_cs_code = cm.cm_addr
+          LEFT JOIN cph_hist cph(NOLOCK) ON p.pi_domain = cph.cph_domain
+                                            AND p.pi_cs_code = cph.cph_cust
+                                            AND p.pi_part_code = cph.cph_part
+          LEFT JOIN pt_mstr pt(NOLOCK) ON p.pi_domain = pt.pt_domain
+                                          AND p.pi_part_code = pt.pt_part
+          LEFT JOIN sp_mstr s(NOLOCK) ON cm.cm_domain = s.sp_domain
+                                         AND cm.cm_slspsn_ex1 = s.sp_addr
+          LEFT JOIN ad_mstr a(NOLOCK) ON s.sp_addr = a.ad_addr
+                                         AND s.sp_domain = a.ad_domain
+          LEFT JOIN [dbo].[BusinessRelation] b(NOLOCK) ON p.pi_user2 = b.BusinessRelationCode
+          LEFT JOIN ctept ON pt.pt_domain = ctept.pt_domain
+                             AND pt.pt_site = ctept.pt_site
+                             AND pt.pt_part = ctept.pt_part
+          LEFT JOIN
+     (
+         SELECT an_code,
+                CASE
+                    WHEN CHARINDEX(',', an__qadc01) > 0
+                    THEN LEFT(an__qadc01, CHARINDEX(',', an__qadc01) - 1)
+                END ContractType,
+                CASE
+                    WHEN CHARINDEX(',', an__qadc01) > 0
+                    THEN SUBSTRING(an__qadc01, CHARINDEX(',', an__qadc01) + 1, 80)
+                END ContractName, 
+                MAX(an_mod_date) MaxDate
+         FROM an_mstr(NOLOCK)
+         WHERE an_type = '9'
+         GROUP BY an_code, 
+                  an__qadc01
+     ) c ON p.pi_list = c.an_code
+          LEFT JOIN
+     (
+         SELECT an_user1, 
+                an_code, 
+                y.code_cmmt
+         FROM
+         (
+             SELECT an_code, 
+                    an_user1
+             FROM an_mstr(NOLOCK)
+             WHERE an_type = '9'
+         ) x
+         LEFT JOIN
+         (
+             SELECT code_value, 
+                    code_cmmt
+             FROM code_mstr(NOLOCK)
+             WHERE code_fldname = 'xxContractOwner'
+         ) y ON X.an_user1 = Y.code_value
+     ) d ON p.pi_list = d.an_code
+          LEFT JOIN
+     (
+         SELECT ad_addr,
+                CASE
+                    WHEN a.ContOwner IS NOT NULL
+                    THEN a.ContOwner
+                    WHEN b.ContOwner IS NOT NULL
+                    THEN b.ContOwner
+                    WHEN c.ContOwner IS NOT NULL
+                    THEN c.ContOwner
+                    ELSE 'PPA-Local'
+                END ContOwnerName
+         FROM
+         (
+             SELECT ad_addr, 
+                    ad_name AS ContOwner
+             FROM ad_mstr(NOLOCK)
+             WHERE ad_type = 'Customer'
+                   AND LEFT(ad_addr, 4) = '1240'
+         ) a
+         LEFT JOIN
+         (
+             SELECT an_user1, 
+                    code_cmmt AS ContOwner
+             FROM an_mstr(NOLOCK)
+                  LEFT JOIN code_mstr(NOLOCK) ON code_fldname = 'xxContractOwner'
+                                                 AND code_value = an_user1
+             WHERE an_type = '9'
+         ) b ON a.ContOwner = b.ContOwner
+         LEFT JOIN
+         (
+             SELECT code_value, 
+                    code_cmmt AS ContOwner
+             FROM code_mstr(NOLOCK)
+             WHERE code_fldname = 'xxContractOwner'
+         ) c ON a.ContOwner = c.ContOwner
+                AND b.ContOwner = c.ContOwner
+     ) co ON p.pi_cs_code = co.ad_addr
+          LEFT JOIN --ContractType ContName
+     (
+         SELECT pi_domain, 
+                pi_cs_code, 
+                pi_list,
+                CASE
+                    WHEN CHARINDEX(',', an__qadc01, 1) > 0
+                    THEN SUBSTRING(an__qadc01, 1, CHARINDEX(',', an__qadc01, 1) - 1)
+                    WHEN cm_region BETWEEN '1101' AND '1105'
+                    THEN 'PPA-Local'
+                    ELSE 'PPA-Local'
+                END ContType,
+                CASE
+                    WHEN CHARINDEX(',', an__qadc01, 1) > 0
+                    THEN TRIM(SUBSTRING(an__qadc01, CHARINDEX(',', an__qadc01, 1) + 1, 100))
+                    ELSE 'PPA-Local'
+                END ContOwner
+         FROM an_mstr(NOLOCK)
+              LEFT JOIN
+         (
+             SELECT pi_domain, 
+                    pi_list, 
+                    pi_cs_code
+             FROM pi_mstr(NOLOCK)
+             GROUP BY pi_domain, 
+                      pi_cs_code, 
+                      pi_list
+         ) p ON an_code = p.pi_cs_code
+                AND an_domain = p.pi_domain
+              LEFT JOIN
+         (
+             SELECT cm_domain, 
+                    cm_addr, 
+                    cm_region
+             FROM cm_mstr(NOLOCK)
+         ) c ON c.cm_domain = p.pi_domain
+                AND p.pi_cs_code = c.cm_addr
+         WHERE an_type = '9'
+     ) ct ON p.pi_list = ct.pi_list
+             AND p.pi_domain = ct.pi_domain
+          LEFT JOIN
+     (
+         SELECT an_code, 
+                code_cmmt
+         FROM code_mstr(NOLOCK)
+              JOIN an_mstr(NOLOCK) ON code_value = an_user1
+                                      AND code_domain = an_domain
+         WHERE code_fldname = 'xxContractOwner'
+     ) coname ON p.pi_cs_code = coname.an_code
+     WHERE 
+     --pi_part_code = '352506070E'
+     --pi_list = '11656500' AND 
+     cph_year >= YEAR(DATEADD(year, -3, GETDATE()))
+     OR cph_year IS NULL;
+
+"

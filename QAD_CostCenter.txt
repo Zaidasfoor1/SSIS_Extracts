@@ -1,0 +1,6 @@
+"SELECT 
+      [cc_ctr]
+      ,[cc_desc]
+      ,[cc_domain]
+  FROM [dbo].[cc_mstr] (nolock)
+  WHERE AzureOeActive = 1 "

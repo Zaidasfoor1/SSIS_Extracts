@@ -1,0 +1,115 @@
+"SELECT so_domain DomainDCode, 
+       sod_part ItemNumber, 
+       sod_site [Site], 
+       pt_desc1 [Description], 
+       sod_nbr SalesOrder, 
+       sod_line Line, 
+       sod_qty_ord QuantityOrdered, 
+       sod_qty_all QuantityAllocated, 
+       sod_qty_pick QuantityPicked, 
+       sod_qty_ord - sod_qty_ship OpenQty, 
+       ptp_ord_mult OrderMultiple, 
+       pti_abc ABCClass, 
+       ptp_buyer BuyerPlanner, 
+       ptp_sfty_stk SafetyStock, 
+       ptp__chr01 [60DaysAverage], 
+       sod_due_date DueDate, 
+       sod_per_date PerformaceDate, 
+       so_ord_date OrderDate, 
+       so_po PurchaseOrder, 
+       so_ship_cmplt ShipComplete, 
+       so_cust SoldTo, 
+       cm_sort SortNameCm, 
+       cm_region Region, 
+       so_ship ShipTo, 
+       ad_sort SortNameAd, 
+       ad_ctry CountryCode, 
+       sod_price Price, 
+       sod_std_cost StdCost, 
+       ((sod_qty_ord - sod_qty_ship) * sod_price) ExtOpenPrice, 
+       [cm_slspsn_ex1] SalespersonCode, 
+       so_curr + '|' + so_rmks + '|' + [cm_slspsn_ex1] + '|' + so_shipvia Text1, 
+       pt_status + '|' + cm_type Text2,
+       CASE
+           WHEN((cm_mstr.cm_region >= '1101'
+                 AND cm_mstr.cm_region <= '1110')
+                OR cm_mstr.cm_region = '9999')
+               AND x.xxpt_part IS NOT NULL
+           THEN 'Plan2021|US PICC'--'US PICC' 
+
+           WHEN sod_det.sod_site = '140'
+           THEN 'Plan2021|Wheeling'--'CPS-WHL'
+
+           WHEN sod_det.sod_site = '160'
+           THEN 'Plan2021|Rochester'--'CPS-RCH'
+
+           WHEN cm_mstr.cm_region >= '1110'
+                AND cm_mstr.cm_region <= '1155'
+           THEN 'Plan2021|CPS-OEM' --'CPS-ATH'
+
+           WHEN((cm_mstr.cm_region >= '1101'
+                 AND cm_mstr.cm_region <= '1106')
+                OR cm_mstr.cm_region = '9999')
+               AND x.xxpt_part IS NULL
+           THEN 'Plan2021|US SF' --'US Sales'
+
+           WHEN cm_mstr.cm_region = '1301'
+                OR (cm_mstr.cm_region = '1113'
+                    AND x.xxpt_part IS NOT NULL)
+           THEN 'Plan2021|LA'--'Latin America'
+
+           WHEN cm_mstr.cm_region >= '3000'
+                AND cm_mstr.cm_region <= '4099'
+           THEN 'Plan2021|EMEA Dist Act'--'EMEA'
+
+           WHEN cm_mstr.cm_region = '1201'
+           THEN 'Plan2021|Canada'--'Canada'
+
+           WHEN cm_mstr.cm_region = '2101'
+           THEN 'Plan2021|China Direct'--'China'
+
+           WHEN cm_mstr.cm_region = '2111'
+           THEN 'Plan2021|Hong Kong'--'Hong Kong'
+
+           WHEN cm_mstr.cm_region >= '2001'
+                AND cm_mstr.cm_region <= '2999'
+           THEN 'Plan2021|JOA'--'APAC'
+
+           WHEN so_cust LIKE 'Z125%'
+           THEN 'Plan2021|EMEA Dist Act'--'EMEA'
+
+           WHEN so_cust LIKE 'Z4xx%'
+           THEN 'Plan2021|EMEA Dist Act'--'EMEA'
+
+           WHEN so_cust LIKE 'Z500%'
+           THEN 'Plan2021|China Direct'--'AMDC'
+
+           WHEN so_cust LIKE 'Z550%'
+           THEN 'Plan2021|Hong Kong'--'Hong Kong'
+
+       END GeographyKey
+FROM dom_mstr(NOLOCK)
+     JOIN so_mstr(NOLOCK) ON so_domain = dom_domain
+     JOIN sod_det(NOLOCK) ON sod_domain = so_domain
+                             AND sod_nbr = so_nbr
+                             AND sod_qty_ord > sod_qty_ship
+     LEFT JOIN pt_mstr(NOLOCK) ON pt_domain = sod_domain
+                                  AND pt_part = sod_part
+     LEFT JOIN cm_mstr(NOLOCK) ON cm_domain = so_domain
+                                  AND cm_addr = so_cust
+     LEFT JOIN ad_mstr(NOLOCK) ON ad_domain = so_domain
+                                  AND ad_addr = so_ship
+     LEFT JOIN ptp_det(NOLOCK) ON ptp_domain = sod_domain
+                                  AND ptp_part = sod_part
+                                  AND ptp_site = sod_site
+     LEFT JOIN si_mstr(NOLOCK) ON si_domain = sod_domain
+                                  AND si_site = sod_site
+     LEFT JOIN pti_det(NOLOCK) ON pti_det.oid_pt_mstr = pt_mstr.oid_pt_mstr
+                                  AND pti_det.oid_si_mstr = si_mstr.oid_si_mstr
+     LEFT JOIN
+(
+    SELECT xxpt_part
+    FROM xxpt_mstr(NOLOCK)
+    WHERE xxpt_domain = '100USD'
+          AND xxpt_mkt_class = 'PICCMidlineCath'
+) x ON pt_part = x.xxpt_part;"

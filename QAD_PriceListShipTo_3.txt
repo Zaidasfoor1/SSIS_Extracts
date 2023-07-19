@@ -1,0 +1,6 @@
+"select ls_domain, ls_addr, ls_type from ls_mstr (nolock)
+ WHERE ls_type <> 'Customer'
+          AND ls_type <> 'Ship-To'
+          AND ls_type <> 'Company'
+          AND ls_type <> 'Supplier'
+GROUP BY ls_domain,ls_addr, ls_type"

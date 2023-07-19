@@ -1,0 +1,33 @@
+"SELECT  
+wo_part ItemNumber
+,pt.ItemDescription
+,wo_nbr WorkOrder
+,wo_lot LotId
+,wo_line ProductionLine
+,wo_site [Site]
+,wo_status [Status]
+,wo_ord_date OrderDate
+,wo_stat_close_date CompletionDate
+,wo_rel_date ReleaseDate
+,wo_due_date DueDate
+,wo_qty_ord QuantityOrdered
+,CASE WHEN wo.wo_status = 'C' then 0 else (wo.wo_qty_ord - wo.wo_qty_comp - wo.wo_qty_rjct) END QuantityOpen
+,wo_qty_comp QuantityCompleted
+,wo_qty_rjct QuantityRejected
+,wo_batch Batch
+,wo_so_job SalesJob
+,wo_vend Supplier
+,wo_lot_next LotSerial
+,wo_type [Type]
+,wo_yield_pct YieldPct
+,wo_seq [Sequence]
+,wo_shift [Shift]
+,wo_routing RoutingCode
+,wo_bom_code BOMCode
+,ptp.ptp_buyer BuyerPlaner
+FROM wo_mstr wo (nolock)
+ LEFT JOIN 
+ (SELECT pt_domain , pt_part , pt_desc1 + ', ' + pt_desc2 ItemDescription
+FROM pt_mstr pt (nolock)
+GROUP BY  pt_domain , pt_part ,  pt_desc1 , pt_desc2) pt ON wo.wo_domain = pt.pt_domain AND wo.wo_part = pt.pt_part
+LEFT JOIN ptp_det ptp(NOLOCK) ON pt.pt_part = ptp.ptp_part"

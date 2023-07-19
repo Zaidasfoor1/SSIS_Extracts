@@ -1,0 +1,4 @@
+"SELECT 
+	  [si_site] Site
+      ,[si_desc] SiteDescription
+  FROM [dbo].[si_mstr] (nolock) "

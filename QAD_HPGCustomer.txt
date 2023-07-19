@@ -1,0 +1,3 @@
+"SELECT [AzureOeKey], ls_domain DomainCode, ls_type ListType, [ls_addr] CustomerCode 
+    FROM [dbo].[ls_mstr] (nolock)
+  WHERE ls_type like 'H%'"

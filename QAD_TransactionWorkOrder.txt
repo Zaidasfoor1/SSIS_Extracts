@@ -1,0 +1,23 @@
+"SELECT  [AzureOeKey], 
+                 [AzureOeDateTime], 
+                 [AzureOeEventId], 
+                 [AzureOeActive], 
+                 [op_domain] Domain, 
+                 op_wo_nbr WorkOrder, 
+                 op_trnbr TransactionNumber, 
+                 op_part ItemNumber, 
+                 op_wo_lot LotId, 
+                 op_date TransactionDate, 
+                 op_wo_op Operation, 
+                 op_emp Employee, 
+                 op_type Type,
+                 CASE
+                     WHEN op_type = 'MOVE'
+                     THEN op_qty_wip
+                     WHEN op_type = 'WOSCRAPI'
+                     THEN op_qty_scrap
+                     WHEN op_type = 'WOSCRAPO'
+                     THEN op_qty_scrap
+                     ELSE op_qty_comp
+                 END Quantity
+FROM [dbo].[op_hist](NOLOCK);"

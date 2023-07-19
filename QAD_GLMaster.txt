@@ -1,0 +1,7 @@
+"SELECT  [GL_ID],
+	   [GLCode], 
+       [GLDescription], 
+       [GLTypeCode], 
+       [GLExchangeMethod], 
+       [GLCategory]
+FROM [dbo].[GL] (NOLOCK); "

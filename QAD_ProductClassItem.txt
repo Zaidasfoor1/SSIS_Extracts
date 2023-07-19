@@ -1,0 +1,88 @@
+"   
+
+SELECT 
+       idh_domain Domain, 
+       Item, 
+       MAX(Segment) Segment, 
+	   MAX(Product) Product,
+       MAX(ProductClass) ProductClass, 
+       MAX(SubCategory) SubCategory,
+	   CAST(MAX(CAST(NPDFlag AS VARCHAR)) AS BIT) NPDFlag,
+	   MAX(pt_status) [Status],max(BusinessRelationName1) Manager,max(xxpt_mkt_char_ex2) as Alternate_Item
+FROM dbo.idh_hist(NOLOCK) dp
+     JOIN
+(
+    SELECT DISTINCT TOP 100000 [xxpt_part] Item, 
+                               [xxpt_mkt_division] Segment,
+                               CASE
+                                   WHEN [xxpt_mkt_segment] = 'GUIDEWIREACCESS'
+                                   THEN 'GUIDEWIRE/ACCESSORIES'
+                                   ELSE [xxpt_mkt_segment]
+                               END ProductClass, 
+                               cm.code_cmmt Product, 
+                               xxpt_mkt_char_ex1 SubCategory,
+							   xxpt_mkt_logi_ex5 NPDFlag,
+							   B.BusinessRelationName1,m.xxpt_mkt_char_ex2
+    FROM dbo.[xxpt_mstr] m(NOLOCK)
+         LEFT JOIN dbo.[code_mstr] cm(NOLOCK) ON m.xxpt_mkt_class = cm.code_value
+		 left join BusinessRelation as B ON B.BusinessRelationCode=m.xxpt_mkt_char_ex6
+    WHERE [xxpt_mkt_division] IS NOT NULL
+          AND TRIM([xxpt_mkt_division]) <> ''
+          AND code_cmmt <> 'Non Vascular'  -- Exclude the double classifications to both Non Vascular and TLAB
+
+          AND cm.code_cmmt <> ''
+          AND code_domain = '100USD'
+) xp ON dp.idh_part = xp.Item
+LEFT JOIN
+(
+SELECT DISTINCT pt_part, pt_status from pt_mstr (NOLOCK) WHERE pt_domain =  '100USD'
+)pt ON dp.idh_part = pt.pt_part
+GROUP BY
+  idh_domain, 
+       Item
+
+UNION
+
+
+SELECT 
+ '100USD' Domain, 
+       Item, 
+       MAX(Segment) Segment, 
+	   MAX(Product) Product,
+       MAX(ProductClass) ProductClass, 
+       MAX(SubCategory) SubCategory,
+	   CAST(MAX(CAST(NPDFlag AS VARCHAR)) AS BIT) NPDFlag,
+	   MAX(pt_status) [Status],BusinessRelationName1,Alternate_Item
+FROM
+(
+ SELECT   TOP 100000 [xxpt_part] Item, 
+                               MAX([xxpt_mkt_division]) Segment,
+                               MAX(CASE
+                                   WHEN [xxpt_mkt_segment] = 'GUIDEWIREACCESS'
+                                   THEN 'GUIDEWIRE/ACCESSORIES'
+                                   ELSE [xxpt_mkt_segment]
+                               END) ProductClass, 
+                               MAX(cm.code_cmmt) Product, 
+                               MAX(xxpt_mkt_char_ex1) SubCategory,
+							   xxpt_mkt_logi_ex5 NPDFlag,  max(B.BusinessRelationName1) BusinessRelationName1
+						      ,max(xxpt_mkt_char_ex2) as Alternate_Item
+    FROM dbo.[xxpt_mstr] m(NOLOCK)
+         LEFT JOIN dbo.[code_mstr] cm(NOLOCK) ON m.xxpt_mkt_class = cm.code_value
+		 left join BusinessRelation as B ON B.BusinessRelationCode=m.xxpt_mkt_char_ex6
+    WHERE [xxpt_mkt_division] IS NOT NULL
+          AND TRIM([xxpt_mkt_division]) <> ''
+          AND code_cmmt <> 'Non Vascular'  -- Exclude the double classifications to both Non Vascular and TLAB
+          AND cm.code_cmmt <> ''
+          AND code_domain = '100USD'
+	GROUP BY 
+	[xxpt_part]   
+	,xxpt_mkt_logi_ex5
+)xx
+LEFT JOIN
+(
+SELECT  pt_part, MAX(pt_status) pt_status from pt_mstr (NOLOCK) WHERE pt_domain =  '100USD'
+GROUP BY pt_part
+)pt ON xx.Item = pt.pt_part
+GROUP BY
+       Item,BusinessRelationName1,Alternate_Item
+"

@@ -1,0 +1,36 @@
+"SELECT DISTINCT 
+       anx_node CustomerCode, --11682514
+       pi_part_code ItemNumber, --ABK1000SP
+       pi_expire [ExpireDate],
+       CASE
+           WHEN CHARINDEX(',', an__qadc01, 1) > 0
+           THEN SUBSTRING(an__qadc01, 1, CHARINDEX(',', an__qadc01, 1) - 1)
+           ELSE an__qadc01
+       END ContType,
+       CASE
+           WHEN CHARINDEX(',', an__qadc01, 1) > 0
+           THEN TRIM(SUBSTRING(an__qadc01, CHARINDEX(',', an__qadc01, 1) + 1, 100))
+           ELSE an__qadc01
+       END ContOwner, 
+       an__qadc01 ContTypeContOwner, --Contract,HPG Biopsy (if this blank exclude)
+       an_user2, --HPG 7030 --contract
+       an_code, --HPGBIOT1
+       an__qadd01 Fee, --3.0000000000
+       ad_name, --Chip Bock
+       code_cmmt --Chip Bock
+FROM anx_det anx(NOLOCK)
+     JOIN an_mstr an(NOLOCK) ON an_domain = anx_domain
+                                AND an_type = anx_type
+                                AND an_code = anx_code
+     JOIN pi_mstr(NOLOCK) ON pi_domain = anx_domain
+                             AND pi_list = anx_code
+                             AND pi_cs_code = anx_code
+     LEFT JOIN ad_mstr(NOLOCK) ON ad_addr = an_user1
+     LEFT JOIN code_mstr(NOLOCK) ON code_fldname = 'xxContractOwner'
+                                    AND code_value = an_user1
+WHERE anx_type = '9'
+      AND pi_cs_type = '9'
+      AND pi_part_type = '6'
+      AND (pi_expire >= GETDATE()
+           OR pi_expire IS NULL)
+      AND an__qadc01 IS NOT NULL;"

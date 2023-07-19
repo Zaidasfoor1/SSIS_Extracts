@@ -1,0 +1,61 @@
+"SELECT DISTINCT * FROM 
+(
+SELECT xxsg_legal Domain, 
+       xxsg_region RegionCode, 
+       xxsg_gdesc Geography, 
+       code_cmmt RegionName, 
+       xxsg_mkt_hier2 MarketHierarchy
+	   --ROW_NUMBER()OVER(Partition By xxsg_region, xxsg_legal Order By xxsg_region, xxsg_mkt_hier2 DESC)As GeographyGroup
+FROM xxsg_mstr x
+     JOIN
+(
+    SELECT code_domain, 
+           code_value, 
+           code_cmmt
+    FROM code_mstr
+    WHERE code_fldname = 'cm_region'
+          AND code_value IS NOT NULL
+          AND code_cmmt IS NOT NULL
+) c ON x.xxsg_region = c.code_value
+       AND x.xxsg_legal = c.code_domain
+     LEFT JOIN businessrelation br ON x.xxsg_gowner = br.businessrelationcode
+)h
+
+UNION ALL
+
+ SELECT code_domain, 
+           code_value RegionCode, 
+		   CASE WHEN (code_value BETWEEN '3000' and  '4999') OR (code_domain = '125GBP')  THEN 'EMEA' ELSE 'NA#' END AS [Geography],
+           code_cmmt RegionName,
+		   NULL MarketHierarchy
+    FROM code_mstr c
+WHERE code_fldname = 'cm_region' AND LEN(code_value) = 4 AND code_value NOT LIKE '%[^0123456789]%'
+AND NOT EXISTS (SELECT * FROM 
+(
+SELECT xxsg_legal Domain, 
+       xxsg_region RegionCode, 
+       xxsg_gdesc  Geography, 
+       code_cmmt RegionName, 
+       xxsg_mkt_hier2 MarketHierarchy
+	   --ROW_NUMBER()OVER(Partition By xxsg_region, xxsg_legal Order By xxsg_region, xxsg_mkt_hier2 DESC)As GeographyGroup
+FROM xxsg_mstr x
+     JOIN
+(
+    SELECT code_domain, 
+           code_value, 
+           code_cmmt
+    FROM code_mstr
+    WHERE code_fldname = 'cm_region'
+          AND code_value IS NOT NULL
+          AND code_cmmt IS NOT NULL
+) c ON x.xxsg_region = c.code_value
+       AND x.xxsg_legal = c.code_domain
+     LEFT JOIN businessrelation br ON x.xxsg_gowner = br.businessrelationcode
+)h2 WHERE c.code_domain = h2.Domain and c.code_value = h2.RegionCode)
+UNION ALL
+
+SELECT '550USD' Domain
+	,'' RegionCode
+	,'Hong Kong' Geography
+	,'' RegionName
+	,'' MarketHierarchy"

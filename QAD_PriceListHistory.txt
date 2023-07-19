@@ -1,0 +1,10 @@
+"SELECT [AzureOeKey], 
+       [AzureOeDateTime], 
+	   iph_domain,
+       iph_inv_nbr, 
+       iph_nbr, 
+       iph_line, 
+       iph_amt, 
+	   iph_list_id,
+       iph_source
+FROM [dbo].[iph_hist](NOLOCK) WHERE [AzureOeKey] > " +  (DT_WSTR, 15) @[User::MaxId]

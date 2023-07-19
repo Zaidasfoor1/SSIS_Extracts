@@ -1,0 +1,131 @@
+"SELECT   tr.AzureOeKey, tr_effdate EffectiveDate, 
+
+             tr_site [Site], 
+
+             dpt.dpt_lbr_cc LaborCostCenter, 
+
+             cc.cc_desc CCDescription, 
+
+             dpt.dpt_dept Department, 
+
+             dpt.dpt_desc DeptDescription, 
+
+             wr.wr_wkctr WorkCenter, 
+
+             tr.tr_nbr [Order], 
+
+             tr.tr_part ItemNumber, 
+
+             pt.pt_desc1 Description1, 
+
+             pt.pt_desc2 Description2, 
+
+             wr.wr_op Operation,
+
+             --CASE
+
+             --    WHEN ptp.oid_ptp_det IS NOT NULL
+
+             --    THEN ptp_ord_qty
+
+             --    ELSE pt_ord_qty
+
+             --END OrderQty, 
+
+             wr.wr_qty_ord QuantityOrdered, 
+
+             tr.tr_qty_loc QtyComp, 
+
+             wr.wr_setup StdSetupTime, 
+
+             CASE
+
+                 WHEN tr_qty_loc > 0
+
+                 THEN wr_setup
+
+                 ELSE(-1 * wr_setup)
+
+             END Setup, 
+
+             wr.wr_run StdRunTime, 
+
+             CASE
+
+                 WHEN tr_qty_loc > 0
+
+                 THEN wr_lbr_std
+
+                 ELSE(-1 * wr_lbr_std)
+
+             END LaborStdAmt, 
+
+             CASE
+
+                 WHEN tr_qty_loc > 0
+
+                 THEN wr_bdn_std
+
+                 ELSE(-1 * wr_bdn_std)
+
+             END BdnStdAmt, 
+
+             tr_qty_loc * wr_run RunHrsEarned, 
+
+             CASE
+
+                 WHEN tr_qty_loc > 0
+
+                 THEN((tr_qty_loc * wr_run) + wr_setup)
+
+                 ELSE((-1 * wr_setup) + (tr_qty_loc * wr_run))
+
+             END RunHrsPlusSetupHrs, 
+
+             tr_qty_loc * (wr_run * wr_men_mch) AdjRunHrsEarned, 
+
+             CASE
+
+                 WHEN tr_qty_loc > 0
+
+                 THEN((tr_qty_loc * (wr_run * wr_men_mch)) + wr_setup)
+
+                 ELSE((tr_qty_loc * (wr_run * wr_men_mch)) + (-1 * wr_setup))
+
+             END SetupPlusAdjRunHours, 
+
+             tr_bdn_std + tr_lbr_std + tr_ovh_std + tr_sub_std TotalStandardCost
+
+FROM tr_hist tr(NOLOCK)
+
+     JOIN pt_mstr pt(NOLOCK) ON tr.tr_domain = pt.pt_domain
+
+                                AND tr.tr_part = pt.pt_part
+
+     --LEFT JOIN ptp_det ptp(NOLOCK) ON tr.tr_domain = ptp.ptp_domain
+
+     --                                 AND tr.tr_site = ptp.ptp_site
+
+     JOIN wr_route wr(NOLOCK) ON tr.tr_part = wr.wr_part
+
+                                 AND tr.tr_nbr = wr.wr_nbr
+
+     JOIN wc_mstr wc(NOLOCK) ON wr.wr_domain = wc.wc_domain
+
+                                AND ISNULL(wr.wr_mch, '|') = ISNULL(wc.wc_mch, '|')
+
+                                AND wr.wr_wkctr = wc.wc_wkctr
+
+     JOIN dpt_mstr dpt(NOLOCK) ON wc.wc_domain = dpt.dpt_domain
+
+                                  AND wc.wc_dept = dpt.dpt_dept
+
+     JOIN cc_mstr cc(NOLOCK) ON dpt.dpt_domain = cc.cc_domain
+
+                                AND dpt.dpt_lbr_cc = cc.cc_ctr
+
+	WHERE
+
+	tr_type = 'RCT-WO' and (wr_setup > 0 or wr_run > 0)
+
+	AND  tr_effdate >= '2019-01-01' "

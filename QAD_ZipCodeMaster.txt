@@ -1,0 +1,8 @@
+"SELECT [AzureOeKey]
+	,[xxzip_zip] [Zip]
+      ,[xxzip_ctry] [Country]
+      ,[xxzip_city] [City]
+      ,[xxzip_state] [State]
+      ,[xxzip_slspsn] [SalesPersonCode]
+  FROM [dbo].[xxzip_mstr] 
+  where [xxzip_slspsn] is not null"

@@ -1,0 +1,20 @@
+"SELECT  
+	 ExchangeRateTypeCode
+	   ,cf.[CurrencyCode] [CurrencyCodeFrom]
+      ,cf.[CurrencyDescription] [CurrencyDescriptionFrom]
+	  ,ct.[CurrencyCode] [CurrencyCodeTo]
+      ,ct.[CurrencyDescription] [CurrencyDescriptionTo]
+      ,[ExchangeRateValidDateFrom]
+      ,[ExchangeRateValidDateTill]
+	   ,[ExchangeRateValidDateTill] QADBalanceSheetMonth
+	  ,DATEADD(month,-1,[ExchangeRateValidDateTill]) IncomeStatementMonth
+	  --,FORMAT([ExchangeRateValidDateTill],'MMM-yyy') QADBalanceSheetMonth
+	  --,FORMAT(DATEADD(month,-1,[ExchangeRateValidDateTill]),'MMM-yyy') IncomeStatementMonth
+      ,[ExchangeRate]
+      --,[ExchangeRateType_ID]
+      ,[ExchangeRateScale]
+
+  FROM [dbo].[ExchangeRate] e (nolock)
+  LEFT JOIN [dbo].[Currency] cf (nolock) ON e.FromCurrency_ID = cf.Currency_ID
+  LEFT JOIN [dbo].[Currency] ct (nolock) ON e.ToCurrency_ID = ct.Currency_ID
+  LEFT JOIN ExchangeRateType et (nolock) ON e.ExchangeRateType_ID = et.ExchangeRateType_ID"

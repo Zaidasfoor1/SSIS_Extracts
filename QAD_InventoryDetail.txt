@@ -1,0 +1,53 @@
+"SELECT i.in_part, 
+       p.pt_desc1, 
+       p.pt_desc2, 
+       i.in_site,
+       CASE
+           WHEN p.AzureOeKey IS NOT NULL
+           THEN ptp_buyer
+           ELSE pt_buyer
+       END [BuyerPlanner], 
+       in_qty_oh, 
+       ld_qty_oh, 
+       ld_grade, 
+       ld_qty_all,
+       CASE
+           WHEN ld_qty_oh = 0
+           THEN 0
+           ELSE ld_qty_oh - ld_qty_all
+       END QtyAvailable, 
+       pt_um, 
+       ld_loc,
+       pti_lot_ser LotSerial, 
+       ld_lot, 
+       ld_ref, 
+       ld_status, 
+       ld_expire, 
+       pt_btb_type, 
+       pt_status, 
+       pt_prod_line, 
+       pt_group, 
+       pt_part_type, 
+       ld_date, 
+       sct_cst_tot
+FROM in_mstr i(NOLOCK)
+     JOIN ld_det l(NOLOCK) ON i.in_domain = l.ld_domain
+                              AND i.in_site = l.ld_site
+                              AND i.in_part = l.ld_part
+     JOIN pt_mstr p(NOLOCK) ON l.ld_domain = p.pt_domain
+                               AND l.ld_part = p.pt_part
+     JOIN sct_det s(NOLOCK) ON i.in_domain = s.sct_domain
+                               AND i.in_site = s.sct_site
+                               AND i.in_part = s.sct_part
+     LEFT JOIN ptp_det ptp(NOLOCK) ON i.in_site = ptp.ptp_site
+                                      AND i.in_part = ptp.ptp_part
+     LEFT JOIN
+(
+    SELECT oid_pt_mstr, 
+           pti_lot_ser
+    FROM pti_det
+    GROUP BY oid_pt_mstr, 
+             pti_lot_ser
+) pti ON p.oid_pt_mstr = pti.oid_pt_mstr
+WHERE sct_sim = 'Standard'
+      AND l.ld_qty_oh <> 0;"

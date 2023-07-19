@@ -1,0 +1,70 @@
+"
+ WITH cte_transhistlotPO(so_domain, 
+                        so_nbr, 
+                        so_po)
+     AS (SELECT so_domain, 
+                so_nbr, 
+                so_po
+         FROM so_mstr(NOLOCK)
+
+     )
+     SELECT tr.AzureOeKey, 
+            tr_part ItemNumber, 
+            pt.pt_desc1 Description1, 
+            pt.pt_desc2 Description2, 
+            tr.tr_site Site, 
+            tr.tr_effdate EffectiveDate, 
+            tr.tr_date Date, 
+            tr.tr_expire ExpireDate, 
+            tr.tr_type TransType, 
+            tr.tr_qty_loc Qty, 
+            tr.tr_price Price, 
+            tr.tr_curr Currency, 
+            tr.tr_price * CASE
+                              WHEN(tr.tr_ex_rate2 <> 0
+                                   AND tr.tr_ex_rate2 IS NOT NULL)
+                              THEN(tr.tr_ex_rate / tr.tr_ex_rate2)
+                          END ActualPrice,
+            CASE
+                WHEN tr.tr_type = 'ISS-SO'
+                THEN tr.tr_addr
+                WHEN tr_type = 'RCT-PO'
+                THEN prh_vend
+                ELSE ''
+            END CustomerSupplier, 
+            tr.tr_um UnitOfMeasure, 
+            tr.tr_serial LotSerial, 
+            tr.tr_lot LotId, 
+            tr.tr_grade Grade, 
+            prh.prh_receiver Receiver, 
+            tr.tr_loc Location, 
+            tr.tr_vend_lot SupplierLot, 
+            tr.tr_ship_type ShipType, 
+            tr.tr_nbr [Order], 
+            tr.tr_trnbr TransNumber, 
+            tr.tr_rmks Remarks, 
+            tr.tr_ship_id ShipperNumber, 
+            tr.tr_addr Addresss, 
+            tr.tr_userid UserId, 
+            pt.pt_prod_line ProdLine, 
+            so.so_po PO, 
+            ptp.ptp_buyer BuyerPlaner
+     FROM tr_hist tr(NOLOCK)
+          JOIN pt_mstr pt(NOLOCK) ON tr.tr_domain = pt.pt_domain
+                                     AND tr.tr_part = pt.pt_part
+          LEFT JOIN prh_hist prh(NOLOCK) ON tr.tr_domain = prh.prh_domain
+                                            AND tr.tr_lot = prh.prh_receiver
+                                            AND tr.tr_part = prh.prh_part
+                                            AND tr.tr_nbr = prh.prh_nbr
+          LEFT JOIN ptp_det ptp(NOLOCK) ON pt.pt_domain = ptp.ptp_domain and pt.pt_part = ptp.ptp_part and pt.pt_site = ptp.ptp_site
+          LEFT JOIN cte_transhistlotPO so(NOLOCK) ON tr.tr_domain = so.so_domain
+                                                     AND prh.prh_domain = so.so_domain
+                                                     AND tr.tr_nbr = so.so_nbr
+                                                     AND prh.prh_domain = so.so_domain
+                                                     AND prh.prh_nbr = so.so_nbr
+     WHERE tr.tr_part >= ''
+           AND tr_type <> 'ORD-SO'
+           AND tr_type <> 'ORD-PO'
+           AND tr_type = 'RCT-WO'
+           AND YEAR(tr.tr_effdate) > 2018
+"

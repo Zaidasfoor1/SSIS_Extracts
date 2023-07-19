@@ -1,0 +1,88 @@
+"SELECT m.mrp_part ItemNumber, 
+       pt_desc1 [Description], 
+       m.mrp_site [Site], 
+       mrp_due_date DueDate,
+       CASE
+           WHEN ptp_det.oid_ptp_det IS NOT NULL
+           THEN ptp_pm_code
+           ELSE pt_pm_code
+       END PurchaseManufacture,
+       CASE
+           WHEN ptp_det.oid_ptp_det IS NOT NULL
+           THEN ptp_buyer
+           ELSE pt_buyer
+       END BuyerPlanner, 
+       m.mrp_nbr [Order], 
+       mrp_line LineId, 
+       s.wo_status, 
+       mrp_type OrderType, 
+       mrp_qty MRPQuantity, 
+       in_mstr.in_qty_oh ApprovedQuantity, 
+       p.ProcessQuantity ProcessQuantity, 
+       0 SHPSTATH_QOH, 
+       in_qty_all QuantityAllocated, 
+       i.in_qty_oh INTERSITE_APPRV_QTY, 
+       mrp_detail Detail, 
+       in_mstr.in_qty_oh - mrp_qty [ExcessOnHand], 
+       p.ProcessQuantity + in_mstr.in_qty_oh - mrp_qty [Excess In Process]
+FROM dbo.mrp_det m(NOLOCK)
+     LEFT JOIN dbo.ptp_det(NOLOCK) ON mrp_domain = ptp_domain
+                                      AND mrp_part = ptp_part
+                                      AND mrp_site = ptp_site
+     JOIN dbo.in_mstr(NOLOCK) ON in_domain = ptp_domain
+                                 AND in_site = ptp_site
+                                 AND in_part = ptp_part
+     JOIN dbo.pt_mstr(NOLOCK) ON mrp_domain = pt_domain
+                                 AND mrp_part = pt_part
+     LEFT JOIN
+(
+    SELECT in_domain, 
+           in_site, 
+           in_part, 
+           in_qty_oh
+    FROM in_mstr(NOLOCK)
+    WHERE in_site IN('140', '100')
+) i ON i.in_domain = m.mrp_domain
+       AND CASE
+               WHEN i.in_site = '140'
+               THEN '100'
+               WHEN i.in_site = '100'
+               THEN '140'
+           END = mrp_site
+       AND i.in_part = mrp_part
+     LEFT JOIN
+(
+    SELECT mrp_nbr, 
+           wo_status
+    FROM dbo.mrp_det(NOLOCK)
+         JOIN dbo.wo_mstr(NOLOCK) ON wo_domain = mrp_domain
+                                     AND wo_lot = mrp_line
+    WHERE(mrp_dataset = 'wod_det'
+          OR mrp_dataset = 'wo_mstr')
+         AND mrp_site IN('100', '140')
+    GROUP BY mrp_nbr, 
+             wo_status
+) s ON m.mrp_nbr = s.mrp_nbr
+     LEFT JOIN
+(
+    SELECT mrp_domain, 
+           mrp_site, 
+           mrp_part, 
+           SUM(CASE
+                   WHEN mrp_type = 'supply'
+                   THEN mrp_qty
+                   ELSE 0
+               END) ProcessQuantity
+    FROM dbo.mrp_det(NOLOCK)
+    WHERE mrp_site IN('100', '140')
+    GROUP BY mrp_domain, 
+             mrp_site, 
+             mrp_part
+) p ON p.mrp_domain = m.mrp_domain
+       AND p.mrp_site = m.mrp_site
+       AND m.mrp_part = p.mrp_part
+       AND m.mrp_site = m.mrp_site
+       AND m.mrp_part = m.mrp_part
+WHERE m.mrp_domain = '100USD'
+      AND m.mrp_site IN('100', '140')
+"

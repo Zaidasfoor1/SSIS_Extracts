@@ -1,0 +1,88 @@
+"SELECT
+plr.*
+,pl.[AmountType]
+,pls.[CAM]
+,pls.[CAMName]
+,pls.[COID]
+,pl.[ComboType]
+,pl.[ContractName]
+,pls.[ContractOwnerName] as PriceListShipToContractOwnerName
+,pl.[ContractOwnerName] as PriceListContractOwnerName
+,pl.[ContractType]
+,pl.[Currency]
+,pls.[Customer]
+,pls.[CustomerKey]
+,pl.[CustomerName]
+,pl.[CustSupplierCat]
+,pls.[Division]
+,pls.[Division2]
+,pl.[ExpireDate]
+,pl.[ExpireDateKey]
+,pls.[GPO]
+,pls.[GPO2]
+,pls.[GPOID]
+,pls.[IDN]
+,pls.[IDN2]
+,pl.[IsGreaterToday]
+,pl.[ItemCat]
+,pl.[ItemCount]
+,pl.[ItemDescription1]
+,pl.[ItemDescription2]
+,pl.[ItemNumberKey]
+,pl.[ListPrice]
+,pls.[ListType1]
+,pls.[ListType2]
+,pls.[ListType3]
+,pls.[ListType4]
+,pls.[ListType5]
+,pls.[ListType6]
+,pl.[MarginPct]
+,pl.[MinQty]
+,pl.[NetPrice]
+,pl.[OwnerId]
+,pl.[OwnerName]
+,pl.[PriceList]
+,pl.[PriceListDescription]
+,pl.[PriceListKey]
+,pl.[Region]
+,pls.[RPC]
+,pls.[RPC2]
+,pls.[SalesPersonKey]
+,pls.[ShipTo]
+,pls.[ShipToKey]
+,pls.[ShipToName]
+,pls.[SortName]
+,pl.[StandardCost]
+,pl.[StartDate]
+,pl.[StartDateKey]
+,pl.[SubCategory]
+,pl.[TMCode]
+,pl.[UnitOfMeasure]
+,pl.[YTDQuantity]
+,pl.[YTDSales]
+FROM
+(
+select SalespersonCode,TMName, customerid, ListType  
+from [dbo].[PriceListRelationship$] (NOLOCK) 
+left join SalesSalesperson on SalespersonCode = [TMCode])plr
+JOIN
+(
+select  * from [dbo].[PriceListshipTo] (NOLOCK) 
+--where SalespersonCode = '12404600' --and customer = '11482100'
+)pls ON plr.SalespersonCode = pls.SalespersonCode 
+	AND plr.customerid = pls.Customer
+	AND (plr.ListType = pls.ListType1
+	OR plr.ListType = pls.ListType2
+	OR plr.ListType = pls.ListType3
+	OR plr.ListType = pls.ListType4
+	OR plr.ListType = pls.ListType5
+	)
+JOIN  
+(  SELECT * FROM [dbo].[PriceList] (NOLOCK) 
+WHERE IsGreaterToday = 1 or  ExpireDate >= getdate()
+--WHERE 1=1 and IsGreaterToday = 1
+--and  SalespersonCode = '12404600' 
+  --AND PriceList = '11014200' --and IsGreaterToday = 1
+)pl 
+ON plr.ListType = pl.PriceList
+AND plr.SalespersonCode = pl.TMCode"

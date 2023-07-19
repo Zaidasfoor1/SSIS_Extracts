@@ -1,0 +1,7 @@
+"SELECT [AzureOeKey], 
+       [Company_ID], 
+       [Domain_ID], 
+       [CompanyCode], 
+       [CompanyIsActive], 
+       [CompanyDescription]
+FROM [dbo].[Company]   (NOLOCK); "

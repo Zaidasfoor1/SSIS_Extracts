@@ -1,0 +1,32 @@
+"
+  SELECT [Period_ID],
+	   [PeriodYear], 
+       [PeriodPeriod], 
+       [PeriodStartDate], 
+	   CASE WHEN [PeriodYearPeriod] = 201801 THEN 'Jan (201801)' 
+		    WHEN [PeriodYearPeriod] = 201802 THEN 'Jan (201802)'
+	   ELSE
+	   FORMAT([PeriodStartDate],'MMM') END [FiscalMonthName],
+	   CASE WHEN [PeriodYearPeriod] = 201801 THEN 'Jan (201801)' 
+		    WHEN [PeriodYearPeriod] = 201802 THEN 'Jan (201802)'
+	   ELSE
+	   FORMAT([PeriodStartDate],'MMM') END + '-' + cast([PeriodYear] as varchar) MonthYear,
+	   DATEPART(QUARTER, [PeriodStartDate]) QuarterNumber,
+	   cast([PeriodYear] as varchar) + '-' + CASE WHEN [PeriodYearPeriod] = 201801 THEN 'Jan (201801)' 
+		    WHEN [PeriodYearPeriod] = 201802 THEN 'Jan (201802)'
+	   ELSE
+	   FORMAT([PeriodStartDate],'MMM') END YearMonth,
+	   cast([PeriodYear] as varchar) + '-' + 'Q' + CAST(DATEPART(QUARTER, [PeriodStartDate]) AS VARCHAR)  YearQtr,
+	   'Q' + CAST(DATEPART(QUARTER, [PeriodStartDate]) AS VARCHAR) [Quarter],
+       [PeriodEndDate], 
+	   [PeriodYearPeriod],
+       [PeriodYearPeriod] [FiscalPeriod], 
+       [PeriodStatus], 
+       [PeriodClosingDate],
+	   cast(month([PeriodStartDate])as varchar)+ '-01-'+ cast(year([PeriodStartDate])as varchar)  FiscalDate,
+  [PeriodTypeCode]  
+  FROM [dbo].[Period] p (NOLOCK)
+ JOIN Company c  (NOLOCK) on p.company_Id = c.company_Id
+ WHERE c.companycode = '100' 
+ AND [PeriodTypeCode] = 'NORM'
+"

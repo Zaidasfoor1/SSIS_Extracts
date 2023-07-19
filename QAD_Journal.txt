@@ -1,0 +1,10 @@
+"SELECT [AzureOeKey]
+      ,[Journal_ID]
+      ,[JournalCode]
+      ,[JournalDescription]
+      ,[Layer_ID]
+      ,[JournalIsActive]
+      ,[SharedSet_ID]
+      ,[JournalTypeCode]
+      ,[JournalControl]
+  FROM [dbo].[Journal] (nolock)"

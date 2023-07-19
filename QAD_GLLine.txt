@@ -1,0 +1,28 @@
+"SELECT 
+h.[AzureOeKey], 
+       h.[AzureOeDateTime], 
+       h.[AzureOeEventId], 
+       h.[AzureOeActive], 
+       h.[PostingDate], 
+       h.[PostingLine_ID], 
+       h.[PostingLineDebitTC], 
+       h.[PostingLineCreditTC], 
+       h.[PostingLineDebitTC] - h.[PostingLineCreditTC] PostingLineNetTC, 
+       PostingYearPeriod, 
+       GLCode, 
+       CompanyCode, 
+       cc.CostCentreCode,
+	   h.[LastModifiedUser],
+	   h.[LastModifiedDate],
+       h.[LastModifiedTime]
+FROM [dbo].[PostingLine] h(NOLOCK)
+     JOIN GL g(NOLOCK) ON h.GL_ID = g.GL_ID
+     --JOIN Layer L(NOLOCK) ON h.Layer_ID = l.Layer_ID
+     --LEFT JOIN Journal j(NOLOCK) ON h.Journal_ID = j.Journal_ID
+     LEFT JOIN CostCentre cc(NOLOCK) ON h.CostCentre_ID = cc.CostCentre_ID
+     JOIN Company c(NOLOCK) ON h.Company_ID = c.Company_ID
+--JOIN SharedSet s(NOLOCK) ON g.SharedSet_ID = s.SharedSet_ID
+WHERE 1 = 1
+      AND PostingYearPeriod >= 202201
+      AND g.GLCode between '40000' and '99999'
+     AND h.[AzureOeKey] > 0;"

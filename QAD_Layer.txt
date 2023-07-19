@@ -1,0 +1,8 @@
+"SELECT  [AzureOeKey]
+      ,[AzureOeActive]
+      ,[Layer_ID]
+      ,[LayerDescription]
+      ,[LayerCode]
+      ,[LayerTypeCode]
+      ,[LayerIsActive]
+  FROM [dbo].[Layer] (nolock)"

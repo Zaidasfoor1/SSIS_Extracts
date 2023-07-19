@@ -1,0 +1,1 @@
+"SELECT Domain_ID, DomainCode FROM Domains (nolock)"

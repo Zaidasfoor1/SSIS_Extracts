@@ -1,0 +1,257 @@
+"DECLARE @BusinessRelation TABLE
+(BusinessRelationCode  VARCHAR(50), 
+ BusinessRelationName1 VARCHAR(200)
+ UNIQUE NONCLUSTERED(BusinessRelationCode)
+);
+INSERT INTO @BusinessRelation
+(BusinessRelationCode, 
+ BusinessRelationName1
+)
+       SELECT BusinessRelationCode, 
+              BusinessRelationName1
+       FROM BusinessRelation(NOLOCK);
+DECLARE @an_mstr TABLE
+(an_domain  VARCHAR(80), 
+ an_type    VARCHAR(200), 
+ an_code    VARCHAR(200), 
+ an__qadc01 VARCHAR(300),
+ UNIQUE NONCLUSTERED(an_domain, an_type, an_code)
+);
+INSERT INTO @an_mstr
+(an_domain, 
+ an_type, 
+ an_code, 
+ an__qadc01
+)
+       SELECT an_domain, 
+              an_type, 
+              an_code, 
+              an__qadc01
+       FROM an_mstr(NOLOCK)
+       GROUP BY an_domain, 
+                an_type, 
+                an_code, 
+                an__qadc01;
+DECLARE @pi_mstr TABLE
+(pi_domain  VARCHAR(80), 
+ pi_list    VARCHAR(80), 
+ pi_cs_code VARCHAR(80), 
+ pi_start   DATE, 
+ pi_expire  DATE, 
+ INDEX IX_pi_mstr NONCLUSTERED(pi_domain, pi_list, pi_cs_code DESC)
+);
+INSERT INTO @pi_mstr
+(pi_domain, 
+ pi_list, 
+ pi_cs_code, 
+ pi_start, 
+ pi_expire
+)
+       SELECT pi_domain, 
+              pi_list, 
+              pi_cs_code, 
+              pi_start, 
+              pi_expire
+       FROM pi_mstr(NOLOCK)
+       WHERE pi_cs_type = '9'
+             AND (pi_expire >= GETDATE()
+                  OR pi_expire = NULL)
+       GROUP BY pi_domain, 
+                pi_list, 
+                pi_cs_code, 
+                pi_start, 
+                pi_expire;
+SELECT DISTINCT 
+       x.*, 
+       s.BusinessRelationName1 SalespersonName, 
+       c.BusinessRelationName1 CustomerName, 
+       r.code_cmmt RegionName, 
+       ShipToName
+FROM
+(
+    SELECT
+
+    --COUNT(1) --40334  
+
+    pi_list PriceList, 
+    anx_node Customer, 
+    ad_addr ShipTo, 
+    pi_start StartDate, 
+    pi_expire [ExpireDate],
+
+    --ad__qad05 ShipToName, 
+
+    cm_region Region, 
+    cm_slspsn_ex1 SalesPersonCode,
+    CASE
+        WHEN an__qadc01 = NULL
+             AND cm_region >= '1101'
+             AND cm_region <= '1105'
+        THEN 'PPA-Local'
+        WHEN CHARINDEX(',', an__qadc01) > 0
+        THEN LEFT(an__qadc01, CHARINDEX(',', an__qadc01) - 1)
+    END ContractType,
+    CASE
+        WHEN an__qadc01 = NULL
+             AND cm_region >= '1101'
+             AND cm_region <= '1105'
+        THEN 'PPA-Local'
+        WHEN CHARINDEX(',', an__qadc01) > 0
+        THEN SUBSTRING(an__qadc01, CHARINDEX(',', an__qadc01) + 1, 80)
+    END ContractName,
+	cm_slspsn_ex2 VCCode
+
+    --pi_list, anx_node, ad_addr, pi_start, pi_expire
+
+    FROM ad_mstr(NOLOCK) --20936
+
+         JOIN cm_mstr(NOLOCK) ON cm_domain = ad_domain
+                                 AND cm_addr = ad_ref
+         JOIN DebtorShipTO(NOLOCK) ON --10135
+
+         DebtorShipTOCode = ad_addr
+         JOIN anx_det(NOLOCK) ON anx_domain = ad_domain
+                                 AND anx_type = '9'
+                                 AND anx_node = ad_ref
+                                 AND anx_active = 1
+         JOIN
+    (
+        SELECT an_domain, 
+               an_type, 
+               an_code, 
+               an__qadc01
+        FROM @an_mstr
+    ) a ON an_domain = anx_domain
+           AND an_type = anx_type
+           AND an_code = anx_code
+         JOIN
+    (
+        SELECT pi_domain, 
+               pi_list, 
+               pi_cs_code, 
+               pi_start, 
+               pi_expire
+        FROM @pi_mstr
+    ) p ON p.pi_domain = anx_domain
+           AND p.pi_list = anx_code
+           AND p.pi_cs_code = anx_code
+
+    --OR pi_expire = NULL
+
+    WHERE ad_domain = '100USD'
+          AND ad_type = 'ship-to'
+          AND DebtorShipTO.CustomCombo0 = 'Yes'
+    UNION ALL
+
+    /* from ls_mstr */
+
+    SELECT
+
+    --COUNT(1) --68062 -- UNION 68066
+
+    pi_list, 
+    ls_addr, 
+    ad_addr, 
+    pi_start, 
+    pi_expire,
+
+    --ad__qad05 ShipToName,
+
+    cm_region, 
+    cm_slspsn_ex1,
+    CASE
+        WHEN CHARINDEX(',', an__qadc01) > 0
+        THEN LEFT(an__qadc01, CHARINDEX(',', an__qadc01) - 1)
+    END ContractType,
+    CASE
+        WHEN CHARINDEX(',', an__qadc01) > 0
+        THEN SUBSTRING(an__qadc01, CHARINDEX(',', an__qadc01) + 1, 80)
+    END ContractName,
+	cm_slspsn_ex2 VCCode
+    FROM ad_mstr(NOLOCK) --20936
+
+         JOIN cm_mstr(NOLOCK) ON cm_domain = ad_domain
+                                 AND cm_addr = ad_ref
+         JOIN ls_mstr ON --44812
+
+         ls_domain = ad_domain
+         AND ls_addr = ad_ref
+         JOIN
+    (
+        SELECT an_domain, 
+               an_type, 
+               an_code, 
+               an__qadc01
+        FROM @an_mstr
+    ) a ON an_domain = ls_domain
+           AND an_type = '9'
+           AND an_code = ls_type
+         JOIN
+    (
+        SELECT pi_domain, 
+               pi_list, 
+               pi_cs_code, 
+               pi_start, 
+               pi_expire
+        FROM @pi_mstr
+    ) p ON p.pi_domain = ls_domain
+           AND p.pi_list = ls_type
+           AND p.pi_cs_code = ls_type
+    WHERE ad_domain = '100USD'
+    UNION ALL
+
+    /*** direct sold-to account ***/
+
+    SELECT
+
+    --COUNT(1)
+
+    pi_list, 
+    ad_ref, 
+    ad_addr, 
+    pi_start, 
+    pi_expire,
+
+    --NULL AS ShipToName,
+
+    cm_region, 
+    cm_slspsn_ex1,
+    CASE
+        WHEN cm_region >= '1101'
+             AND cm_region <= '1105'
+        THEN 'PPA-Local'
+    END ContractType,
+    CASE
+        WHEN cm_region >= '1101'
+             AND cm_region <= '1105'
+        THEN 'PPA-Local'
+    END ContractName,
+	cm_slspsn_ex2 VCCode
+    FROM ad_mstr(NOLOCK)
+         JOIN cm_mstr(NOLOCK) ON cm_domain = ad_domain
+                                 AND cm_addr = ad_ref
+         JOIN
+    (
+        SELECT pi_domain, 
+               pi_list, 
+               pi_cs_code, 
+               pi_start, 
+               pi_expire
+        FROM @pi_mstr
+    ) p ON p.pi_domain = ad_domain
+           AND p.pi_list = ad_ref
+           AND p.pi_cs_code = ad_ref
+    WHERE ad_domain = '100USD'
+) x
+LEFT JOIN code_mstr r(NOLOCK) ON x.Region = r.code_value
+                                 AND code_domain = '100USD'
+                                 AND code_fldname = 'cm_region'
+LEFT JOIN @BusinessRelation s ON x.SalespersonCode = s.BusinessRelationCode
+LEFT JOIN @BusinessRelation c ON x.Customer = c.BusinessRelationCode
+LEFT JOIN
+(
+    SELECT ad_addr, 
+           ad__qad05 ShipToName
+    FROM ad_mstr(NOLOCK)
+    WHERE ad_domain = '100USD'
+) st ON x.ShipTo = st.ad_addr;"

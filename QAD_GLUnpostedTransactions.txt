@@ -1,0 +1,12 @@
+"SELECT 
+glt_entity	Entity
+,glt_domain Domain
+,glt_acct	Account
+,glt_cc	 CostCode
+,glt_ref Reference
+,glt_desc [Description]
+,glt_date	GLDate
+,glt_effdate EffectiveDate
+,glt_amt Amount
+from 
+glt_det (NOLOCK)"

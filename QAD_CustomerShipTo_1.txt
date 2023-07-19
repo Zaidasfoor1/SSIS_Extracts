@@ -1,0 +1,58 @@
+"SELECT a.ad_domain, 
+
+       cm_active, 
+
+       cm_addr, 
+
+       cm_sort, 
+
+       cm_class, 
+
+       cm__chr09, 
+
+       cm__chr10, 
+
+       [cm_slspsn_ex1], 
+
+       a.ad_addr, 
+
+       a.ad_line1, 
+
+       a.ad_line2, 
+
+       a.ad_line3, 
+
+       a.ad_city, 
+
+       a.ad_state, 
+
+       a.ad_zip, 
+
+       a.ad_ctry,
+
+	   a.ad_name
+
+	   ,a2.ad_name  ad_name1
+	      ,d.CustomCombo0
+	   ,d.CustomCombo1
+
+
+FROM [dbo].[ad_mstr] a
+
+     LEFT JOIN [dbo].[cm_mstr] c1 (NOLOCK) ON ad_domain = cm_domain
+
+                                          AND ad_ref = cm_addr
+
+     LEFT JOIN sp_mstr s(NOLOCK) ON c1.cm_domain = s.sp_domain
+
+                                    AND c1.cm_slspsn_ex1 = s.sp_addr
+
+     LEFT JOIN ad_mstr a2(NOLOCK) ON s.sp_domain = a2.ad_domain
+
+								AND s.sp_addr = a2.ad_addr
+	LEFT JOIN DebtorShipTo d (NOLOCK) ON d.Address_ID = 
+a.ad_address_id
+
+
+      WHERE  a.ad_type = 'SHIP-TO'
+"

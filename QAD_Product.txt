@@ -1,0 +1,9 @@
+"select DISTINCT TOP 100000
+  m.[xxpt_mkt_division] Division
+     -- ,CASE WHEN m.[xxpt_mkt_segment] = 'GUIDEWIREACCESS' THEN 'GUIDEWIREACCESSORIES' ELSE m.[xxpt_mkt_segment] END Segment
+       ,CASE WHEN m.[xxpt_mkt_segment] = 'GUIDEWIREACCESS' THEN 'GUIDEWIRE/ACCESSORIES' ELSE m.[xxpt_mkt_segment] END Segment
+	  --, m.[xxpt_mkt_segment] Segment
+	  ,cm.code_cmmt Category
+    FROM dbo.[xxpt_mstr] m  (nolock) LEFT JOIN dbo.[code_mstr] cm (nolock) ON m.xxpt_mkt_class = cm.code_value
+	WHERE [xxpt_mkt_division] IS NOT NULL
+	AND  m.[xxpt_mkt_segment] IS NOT NULL" 

@@ -1,0 +1,6 @@
+"SELECT p.AzureOeKey, p.pi_domain, p.pi_list_id, p.pi_list, p.pi_desc, p.pi_start, p.pi_expire , pd.pid_amt, pt.pt_um
+    FROM [dbo].[pi_mstr] p (nolock) join
+		pid_det pd (nolock) ON p.pi_domain = pd.pid_domain and p.pi_list_id = pd.pid_list_id
+		LEFT JOIN pt_mstr pt (nolock) ON p.pi_part_code = pt.pt_part
+							and p.pi_domain = pt.pt_domain
+							and  pd.pid_domain = pt.pt_domain"

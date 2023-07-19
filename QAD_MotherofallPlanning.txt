@@ -1,0 +1,52 @@
+"select  
+oid_sod_det
+ ,sod_domain 'Domain'
+,sod_part 'ItemNumber'
+,sod_site 'Site'
+,pt_desc1 'Description'
+,sod_nbr 'SalesOrderNumber'
+,sod_line 'Line'
+,sod_qty_ord 'QuantityOrdered'
+,sod_qty_all 'QuantityAllocated'
+,sod_qty_pick 'QuantityPicked'
+ ,sod_qty_ord - sod_qty_ship 'Quantity Open'
+,ptp_ord_mult 'OrderMultiple'
+,pti_abc 'ABCClass'
+,ptp_buyer 'BuyerPlanner'
+,ptp_sfty_stk 'SafetyStock'
+,ptp__chr01 '60DayAvg'
+,sod_due_date 'DueDate'
+,sod_per_date 'PerformanceDate'
+,so_ord_date 'OrderDate'
+,so_po 'PurchaseOrder'
+,so_ship_cmplt 'ShipComplete'
+,so_cust 'SoldTo'
+,cm_sort 'SortName'
+,cm_region 'Region'
+,so_ship 'ShipTo'
+,ad_sort 'SortName2'
+,ad_ctry  'CountryCode'
+,sod_price 'Price'
+,sod_std_cost 'Cost'
+,((sod_qty_ord - sod_qty_ship) * sod_price) 'ExtOpenPrice'
+--,fLdQty (sod_domain, sod_part, sod_site, 'Approved') 'ApprovedQty'
+--fLdQty (sod_domain, sod_part, sod_site, 'Quarntin')QUARNTIN_QTY
+--fLdrEF (sod_domain, sod_part, sod_site, 'Quarntin') STERILIZATION_NUMBER
+--fWoOpenQty(sod_domain, sod_part)WO_OPEN_QTY
+,so_curr 'Currency'
+,so_rmks 'Remarks'
+,so_slspsn_ex1 'SalesPerson1'
+,so_shipvia 'ShipVia'
+--fGetAvailQty (ptp_site, ptp_part) UNALLOCATED_INVENTORY
+FROM
+  dbo.sod_det sod (NOLOCK)
+ JOIN pt_mstr pt (NOLOCK) ON sod.sod_domain = pt.pt_domain and sod.sod_site = pt.pt_site
+ JOIN so_mstr so (NOLOCK) ON sod.sod_domain = so.so_domain  and sod.sod_nbr = so.so_nbr
+ JOIN ad_mstr ad (NOLOCK) ON so.so_domain = ad.ad_domain and so.so_ship = ad.ad_addr
+ JOIN cm_mstr cm (NOLOCK) ON so.so_domain = cm.cm_domain and so.so_cust = cm.cm_addr
+ JOIN ptp_det ptp (NOLOCK) ON sod.sod_site = ptp.ptp_site  and pt.pt_part = ptp.ptp_part and sod.sod_part = ptp.ptp_part
+ JOIN pti_det pti (NOLOCK) ON pt.oid_pt_mstr = pti.oid_pt_mstr  
+ JOIN si_mstr si (NOLOCK) ON si.oid_si_mstr = pti.oid_si_mstr and ptp.ptp_domain = si.si_domain and ptp.ptp_site = si.si_site
+WHERE (sod_qty_ord - sod_qty_ship) > 0
+and sod_domain = '100USD'
+and sod_due_date <= '2020-12-01'"

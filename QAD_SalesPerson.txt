@@ -1,0 +1,14 @@
+"SELECT DISTINCT
+ a.ad_domain Domain
+,sp_addr SalesPersonCode
+,a.ad_name SalesPersonName 
+,s.sp_territory TerritoryCode
+,s.sp_comm_pct CommPercent
+,a.ad_line1 Adddress1
+,a.ad_line2 Adddress2
+,a.ad_city City
+,a.ad_state State
+,a.ad_zip	Zip
+,a.ad_country Country
+,a.ad_email Email
+FROM sp_mstr s (nolock) LEFT JOIN ad_mstr a (nolock) ON s.sp_addr = a.ad_addr and s.sp_domain = a.ad_domain"

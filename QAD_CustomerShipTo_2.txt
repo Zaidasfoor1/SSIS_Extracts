@@ -1,0 +1,9 @@
+"SELECT [ls_domain], 
+       [ls_addr], 
+       [ls_type]
+FROM [dbo].[ls_mstr]
+--where [ls_addr] IN ('11453500' ,'11803400','11896400','11553900')
+WHERE ls_type <> 'customer'
+      AND ls_type <> 'Ship-To'
+      AND ls_type <> 'Company'
+      AND ls_type <> 'Supplier';"

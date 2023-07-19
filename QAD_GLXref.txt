@@ -1,0 +1,9 @@
+"SELECT [AzureOeKey]
+      ,[AzureOeDateTime]
+      ,[AzureOeEventId]
+      ,[AzureOeActive]
+      ,[ConsolidPostingXref_ID]
+      ,[Consolid_ID]
+      ,[PostingLine_ID]
+      ,[PostingHist_ID]
+  FROM [dbo].[ConsolidPostingXref] (nolock)"

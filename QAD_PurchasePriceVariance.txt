@@ -1,0 +1,48 @@
+"--CREATE INDEX IX_tr_part ON  [tr_hist] (tr_part)
+--   CREATE INDEX IX_tr_lot ON  [tr_hist] (tr_lot)
+
+SELECT
+
+	p.[AzureOeKey]
+      ,p.[AzureOeDateTime]
+      ,p.[AzureOeEventId]
+      ,p.[AzureOeActive],
+prh_rcp_date [ReceiptDate], 
+              prh_site [Site], 
+              tr_type [TransactionType], 
+              prh_type [PurchaseType], 
+              prh_vend [Supplier], 
+              BusinessRelationName1 [Name], 
+              prh_nbr [PurchaseOrder], 
+              prh_line [PurchaseOrderLine], 
+              prh_receiver [Receiver], 
+              prh_part [ItemNumber], 
+              prh_rcvd [ReceiptQuantity], 
+              prh_um [UnitofMeasure], 
+              prh_um_conv [UMConversion], 
+              prh_curr_amt [CurrencyAmt], 
+              prh_curr [Currency], 
+              prh_fix_rate [FixedRate], 
+              prh_ex_rate [ExchangeRate], 
+              prh_ex_rate2 [ExchRate2], 
+              prh_pur_cost [POCost], 
+              prh_pur_std [POStdCost], 
+              tr_qty_loc [LocQtyChange], 
+              tr_um [UnitofMeasure2], 
+              tr_mtl_std [Material], 
+              tr_lbr_std [Labor], 
+              tr_bdn_std [Burden], 
+              tr_sub_std [Subcontract], 
+              tr_ovh_std [Overhead], 
+              tr_sub_std + tr_bdn_std + tr_lbr_std + tr_mtl_std + tr_ovh_std [TotalStandard], 
+              tr_trnbr [TransactionNumber]
+FROM [dbo].[prh_hist] p(NOLOCK)
+     LEFT JOIN [dbo].[tr_hist] t(NOLOCK) ON p.prh_domain = t.tr_domain
+                                            AND p.prh_receiver = t.tr_lot
+                                            AND p.prh_part = t.tr_part
+											AND p.prh_line = t.tr_line
+                                            AND p.prh_site = t.tr_site
+     LEFT JOIN [businessRelation] b(NOLOCK) ON p.prh_vend = b.BusinessRelationCode
+WHERE(tr_type = 'RCT-PO'
+      OR tr_type = 'ISS-PRV'
+      OR tr_type = 'ISS-RV' ) and p.AzureOeKey > 0"

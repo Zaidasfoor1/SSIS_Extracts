@@ -1,0 +1,11 @@
+"SELECT  [ls_domain] Domain, [ls_addr] CustomerId, [1] [ListType1] ,[2] [ListType2],[3] [ListType3],[4] [ListType4] ,[5] [ListType5],[6]  [ListType6]
+FROM  
+(
+  SELECT  ROW_NUMBER() OVER(Partition by [ls_addr] ORDER BY [ls_addr]) AS [Row_Number],  [ls_domain], [ls_addr]  ,[ls_type]
+  FROM [stg].[PriceListListType$]
+) AS SourceTable  
+PIVOT  
+(  
+  min([ls_type])
+  FOR [Row_Number] IN ([1],[2],[3],[4],[5],[6] )  
+) AS PivotTable; "

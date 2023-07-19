@@ -1,0 +1,29 @@
+"SELECT DISTINCT 
+       pt.pt_domain Domain, 
+       pt_part ItemNumber, 
+       pt_prod_line ProductLineCode,
+       COALESCE(pt_desc1, pt_desc2) ItemDesc, 
+       pt_group ItemGroupCode, 
+       gr.code_cmmt ItemGroupDesc, 
+       pt_part_type ItemTypeCode, 
+       pt_um UnitOfMeasure, 
+       pt_status ItemStatus, 
+       cm.code_cmmt ItemTypeDesc, 
+       pt_promo QuotaGroup, 
+       pt_status ProductStatus
+FROM [dbo].[pt_mstr] pt
+     LEFT JOIN dbo.[code_mstr] cm(NOLOCK) ON pt.pt_part_type = cm.code_value
+                                             AND pt.pt_domain = cm.code_domain
+                                             AND cm.code_fldname = 'pt_part_type'
+
+     --LEFT JOIN   dbo.[code_mstr] pl (nolock)  on pt.pt_prod_line = pl.code_value and pt.pt_domain = pl.code_domain
+
+     LEFT JOIN dbo.[code_mstr] gr(NOLOCK) ON pt.pt_group = gr.code_value
+                                             AND pt.pt_domain = gr.code_domain
+                                             AND gr.code_fldname = 'pt_group'
+WHERE 
+--pt.pt_status IS NOT NULL --AND  pt_status = 'A'
+--      AND 
+pt_part <> '295006-105-675'
+--Duplicate key is K757614015-SC
+and COALESCE(pt_desc1, pt_desc2) not like ('%do not use%');"

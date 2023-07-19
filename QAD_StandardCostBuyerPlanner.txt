@@ -1,0 +1,46 @@
+"SELECT  
+	  sct_part ItemNumber, 
+       pt_desc1 Description1, 
+       pt_desc2 Description2, 
+       sct_sim CostSet, 
+       sct_site [Site], 
+       --if avail ptp_det then ptp_pm_code else pt_pm_code
+       CASE
+           WHEN ptp_det.oid_ptp_det IS NOT NULL
+           THEN ptp_pm_code
+           ELSE pt_pm_code
+       END PMCode, 
+       pt_status [Status], 
+       sct_mtl_tl Material, 
+       sct_lbr_tl Labor, 
+       sct_bdn_tl Burden, 
+       sct_ovh_tl Overhead, 
+       sct_sub_tl SubContract, 
+       sct_cst_tot CostTotal, 
+       sct_cst_date CostUpdate, 
+       sct_mtl_ll MaterialLL, 
+       sct_lbr_ll LaborLL, 
+       sct_bdn_ll BurdenLL, 
+       sct_ovh_ll OverheadLL, 
+       sct_sub_ll SubContractLL,
+	   spt_cst_tl Transfer
+FROM sct_det(NOLOCK)
+     JOIN pt_mstr(NOLOCK) ON sct_det.sct_domain = pt_mstr.pt_domain
+                             AND sct_det.sct_part = pt_mstr.pt_part
+     JOIN ptp_det(NOLOCK) ON sct_det.sct_site = ptp_det.ptp_site
+                             AND pt_mstr.pt_domain = ptp_det.ptp_domain
+                             AND pt_mstr.pt_part = ptp_det.ptp_part
+     LEFT JOIN
+(
+    SELECT spt_domain, 
+           spt_site, 
+           spt_sim, 
+           spt_part, 
+           spt_element, 
+           spt_cst_tl
+    FROM spt_det(NOLOCK)
+    WHERE spt_element = 'TRANSFER'
+) spt_det ON spt_domain = sct_domain
+             AND spt_site = sct_site
+             AND spt_sim = sct_sim
+             AND spt_part = pt_part;"

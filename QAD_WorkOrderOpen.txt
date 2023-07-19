@@ -1,0 +1,117 @@
+"SELECT  
+
+sct_site SiteId,
+
+wo_nbr as WorkOrder, 
+
+pt_part_type as ItemType, 
+
+--wo_vend as Supplier, 
+
+wo_ord_date as OrderDate, 
+
+wo_status as [WorkOrderStatus], 
+
+--pt_status as Status, 
+
+wo_part as ItemNumber, 
+
+pt_desc1 as Description, 
+
+wo_lot as LotId, 
+
+ptp_buyer as BuyerPlanner, 
+
+null as Name, 
+
+ptp_vend as SupplierNumber, 
+
+wo_site as Site, 
+
+wo_batch as Batch, 
+
+wo_qty_ord as QuantityOrdered, 
+
+wo_qty_comp as QuantityCompleted,
+
+CASE WHEN wo_status = 'C' then 0 else wo_qty_ord - wo_qty_comp - wo_qty_rjct END as QuantityOpen,
+
+wo_rel_date as ReleaseDate, 
+
+wo_due_date as DueDate, 
+
+sct_cst_tot as CostTotal, 
+
+sct_cst_tot * wo_qty_ord as Extended, 
+
+wo_ref as Reference, 
+
+wo_rmks as Remarks, 
+
+null as AGING, 
+
+null as LT, 
+
+wo_expire as ExpiredDate, 
+
+wo_so_job as SalesJob, 
+
+pt__chr04 as XXX,
+
+pt_ord_mult as OrderMultiple, 
+
+pt_article as ArticleNumber, 
+
+code_cmmt as MCCa, 
+
+wo_close_eff as CloseDate, 
+
+wo_acct_close as AccountingClosed, 
+
+pt_prod_line as ProdLine, 
+
+wo__chr04 as UpdUserID, 
+
+null as ReasonCode, 
+
+null as ReasonDescription, 
+
+null as UpdDate, 
+
+null as UpdTime
+
+
+
+from wo_mstr w (nolock) JOIN pt_mstr p 
+
+ON w.wo_domain = p.pt_domain
+
+and w.wo_part = p.pt_part
+
+LEFT JOIN ptp_det pt (nolock) ON w.wo_domain = pt.ptp_domain
+
+	and w.wo_site = pt.ptp_site
+
+	and w.wo_part = pt.ptp_part
+
+LEFT JOIN code_mstr c (nolock) ON w.wo_domain = c.code_domain
+
+	and w.wo_part = c.code_value
+
+LEFT JOIN sct_det s (nolock) ON p.pt_domain = s.sct_domain and p.pt_site = s.sct_site and p.pt_part = s.sct_part
+
+WHERE 
+
+--code_fldname = 'PACK-MCH'
+
+--and
+
+wo_status = 'r' 
+
+--and wo_due_date <= EOMONTH(getdate(),6)
+
+--and sct_site = '140'
+
+--and sct_part = '4-40-14-007-CB'
+
+and sct_sim = 'Standard'"

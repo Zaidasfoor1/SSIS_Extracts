@@ -1,0 +1,21 @@
+"/**
+Comment out the  um_alt_um = 'EA' 
+**/
+SELECT 
+      [um_um] UnitOfMeasue
+      ,[um_alt_um] AltUnitOfMeasure
+      ,[um_conv] Conversion
+      ,[um_part] ItemNumber
+      ,[um_domain] DomainCode
+  FROM [dbo].[um_mstr] (nolock)
+  WHERE [AzureOeActive] = 1
+  --and um_alt_um = 'EA' 
+  --and um_part = 'DBAG600'
+  --and um_domain = '100USD'
+  and [um_part] is not null
+  GROUP BY 
+        [um_um]
+      ,[um_alt_um]
+      ,[um_conv]
+      ,[um_part]
+      ,[um_domain]"

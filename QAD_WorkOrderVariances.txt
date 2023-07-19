@@ -1,0 +1,80 @@
+"SELECT w.wo_domain, 
+       w.wo_site, 
+       w.wo_part, 
+       p.pt_desc1, 
+       p.pt_desc2, 
+       p.pt_prod_line, 
+       p.pt_part_type, 
+       ptp_buyer BuyerPlanner
+       ,
+       --fGetBuyer(wo_site,wo_part, pt_buyer) 
+       w.wo_nbr, 
+       w.wo_lot, 
+       w.wo_type, 
+       w.wo_ord_date, 
+       w.wo_rel_date, 
+       w.wo_due_date, 
+       w.wo_status, 
+       w.wo_stat_close_date, 
+       w.wo_stat_close_userid, 
+       w.wo_acct_close, 
+       w.wo_close_eff, 
+       w.wo_qty_ord, 
+       w.wo_qty_comp, 
+       w.wo_qty_rjct, 
+       w.wo_wip_tot, 
+       w.wo_mtl_tot, 
+       w.wo_lbr_tot, 
+       w.wo_bdn_tot, 
+       w.wo_ovh_tot, 
+       w.wo_mtl_var, 
+       w.wo_lbr_var, 
+       w.wo_bdn_var, 
+       w.wo_sub_var, 
+       w.wo_mthd_var, 
+       w.wo_flr_acct, 
+       w.wo_flr_cc, 
+       w.wo_mvar_acct, 
+       w.wo_mvrr_cc, 
+       w.wo_svar_acct, 
+       w.wo_svar_cc, 
+       w.wo_svrr_acct, 
+       w.wo_svrr_cc, 
+       w.wo_project, 
+       wo_mtl_var + wo_mthd_var MaterialUsageVa, 
+       sct_cst_tot StandardCost, 
+       wo_qty_rjct * sct_cst_tot RejectedCost
+FROM [dbo].[wo_mstr] w(NOLOCK)
+     JOIN pt_mstr p(NOLOCK) ON w.wo_domain = p.pt_domain
+                               AND w.wo_part = p.pt_part
+     LEFT JOIN
+(
+    SELECT sct_domain, 
+           sct_site, 
+           sct_part, 
+           MAX(sct_cst_tot) sct_cst_tot
+    FROM sct_det(NOLOCK)
+    WHERE sct_sim = 'STANDARD'
+    GROUP BY sct_domain, 
+             sct_site, 
+             sct_part
+) sct ON wo_domain = sct.sct_domain
+		AND w.wo_site = sct.sct_site
+         AND w.wo_part = sct.sct_part
+         AND p.pt_part = sct.sct_part
+     LEFT JOIN
+(
+    SELECT ptp_domain, 
+           ptp_site, 
+           ptp_part, 
+           ptp_buyer
+    FROM ptp_det(NOLOCK)
+    GROUP BY ptp_domain, 
+             ptp_site, 
+             ptp_part, 
+             ptp_buyer
+) ptp ON w.wo_domain = ptp.ptp_domain
+         AND sct.sct_domain = ptp.ptp_domain
+         AND sct.sct_site = ptp.ptp_site
+         AND sct.sct_part = ptp.ptp_part
+"

@@ -1,0 +1,5 @@
+"SELECT cm_addr CustomerId, [cm_slspsn_ex1] SalespersonCode ,anx_code ListType
+	FROM anx_det (nolock) JOIN 
+	cm_mstr (nolock) ON cm_domain =  anx_domain
+		AND cm_addr = anx_node
+	where anx_domain = '100USD'and anx_type = '9'"

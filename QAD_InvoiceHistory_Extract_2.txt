@@ -1,0 +1,423 @@
+"SELECT ih.AzureOeKey [AzureOeKey_ih], 
+
+       idh.AzureOeKey [AzureOeKey_idh], 
+
+       oid_ih_hist, 
+
+       oid_idh_hist, 
+
+       ih_domain DomainCode, 
+
+       ih_cust CustomerCode, 
+
+       ih_daybook DayBook, 
+
+       ih_inv_nbr InvoiceNumber, 
+
+       pt.pt_part ItemNumber, 
+
+       idh_site SiteCode, 
+
+       ct.gl_base_curr BaseCurrency, 
+
+       [ih_curr] TransCurrency,
+
+       CASE
+
+           WHEN idh_price = 0
+
+           THEN 'Y'
+
+           ELSE 'N'
+
+       END IsSample, 
+
+       ih_inv_date InvoiceDate, 
+
+       [ih_ex_rate] TransExchangeRate, 
+
+       [ih_ex_rate2] TransExchangeRate2, 
+
+       ih_inv_nbr Invoice, 
+
+       ih_rmks Remarks, 
+
+       ih_shipvia ShipVia, 
+
+       ih_ord_date OrderDate, 
+
+       ih_nbr 'OrderNumber', 
+
+       idh_line Line, 
+
+       idh_type ShipType, 
+
+       idh_custpart CustomerItem, 
+
+       idh_qty_inv QtyInvoiced, 
+
+       idh_qty_ord QtyOrdered, 
+
+       idh_qty_ord - idh_qty_ship QtyBO, 
+
+       idh_acct SalesAccount, 
+
+       idh_um UnitMeasure, 
+
+       idh_um_conv UMConversion, 
+
+       idh_std_cost Cost, 
+
+       pt_group ItemGroup, 
+
+       pt_promo QuotaGroup, 
+
+       ih_ship_date ShipDate, 
+
+       idh_site Site, 
+
+       cm_sort SortName, 
+
+       cm_class Class, 
+
+       cm__chr09 GPOID, 
+
+       cm__chr10 ParentGPOID, 
+
+       ih_ship ShipTo, 
+
+       ad_line1 Address, 
+
+       ad_line2 Address2, 
+
+       ad_city ShipToCity, 
+
+       ad_state ShipToState, 
+
+       ad_zip PostalCode, 
+
+       ad_ctry CountryCode, 
+
+       cm_slspsn_ex1 CurrentSalesPerson, 
+
+       idh_tax_env TaxEvironment, 
+
+       BusinessRelationName1 CurrentSalesPersonName, 
+
+       ih_po PurchaseOrder, 
+
+       ih_ar_acct ARAccount, 
+
+       ih_ar_sub ARSubAccount, 
+
+       ih_ar_cc CostCenter, 
+
+       cm_region Region, 
+
+       pt_prod_line ProdLine,
+
+       CASE
+
+           WHEN ih_curr = 'USD'
+
+           THEN(idh_price * idh_qty_inv)
+
+           ELSE(idh_price * idh_qty_inv) / c.ExchangeRate
+
+       END CorpInvoiceAmount,
+
+       CASE
+
+           WHEN ct.gl_base_curr <> [ih_curr]
+
+           THEN(idh_std_cost * idh_qty_inv) / ih_ex_rate2
+
+           WHEN ih_curr = 'USD'
+
+           THEN(idh_std_cost * idh_qty_inv)
+
+           ELSE(idh_std_cost * idh_qty_inv) / c.ExchangeRate
+
+       END CorpArgonExtendedCost,
+
+       CASE
+
+           WHEN ih_curr = 'USD'
+
+           THEN(idh_price * idh_qty_inv)
+
+           ELSE(idh_price * idh_qty_inv) / c.ExchangeRate
+
+       END - CASE
+
+                 WHEN ct.gl_base_curr <> [ih_curr]
+
+                 THEN(idh_std_cost * idh_qty_inv) / ih_ex_rate2
+
+                 WHEN ih_curr = 'USD'
+
+                 THEN(idh_std_cost * idh_qty_inv)
+
+                 ELSE(idh_std_cost * idh_qty_inv) / c.ExchangeRate
+
+             END CorpArgonGrossMarginExtended,
+
+
+
+       --CASE WHEN ih_curr = 'USD' THEN  ((idh_price * idh_qty_inv ) - (idh_std_cost * idh_qty_inv))  ELSE ((idh_price * idh_qty_inv ) - (idh_std_cost * idh_qty_inv)) / c.ExchangeRate END CorpArgonGrossMarginExtended
+
+
+
+       CASE
+
+           WHEN ih_curr = 'USD'
+
+           THEN(idh_list_pr * idh_qty_inv)
+
+           ELSE(idh_list_pr * idh_qty_inv) / c.ExchangeRate
+
+       END CorpListPriceExtended,
+
+
+
+       --,CASE WHEN ct.gl_base_curr = 'USD' THEN (idh_price * idh_qty_inv) ELSE (idh_price * idh_qty_inv) / b.ExchangeRate END PlanInvoiceAmount
+
+
+
+       CASE
+
+           WHEN [ih_curr] = 'USD'
+
+           THEN(idh_price * idh_qty_inv)
+
+           ELSE(idh_price * idh_qty_inv) / b.ExchangeRate
+
+       END PlanInvoiceAmount,
+
+       CASE
+
+           WHEN ct.gl_base_curr <> [ih_curr]
+
+           THEN(idh_std_cost * idh_qty_inv) / b.ExchangeRate
+
+           WHEN ct.gl_base_curr = 'USD'
+
+           THEN(idh_std_cost * idh_qty_inv)
+
+           ELSE(idh_std_cost * idh_qty_inv) / b.ExchangeRate
+
+       END PlanExtendedCost, 
+
+       idh_std_cost StandardCost, 
+
+       idh_qty_inv QuantityInvoice, 
+
+       idh_um UnitOfMeasure,
+
+       CASE
+
+           WHEN um.um_part IS NOT NULL
+
+                AND idh_um <> 'EA'
+
+           THEN idh_qty_inv / um_conv
+
+           WHEN um.um_part IS NULL
+
+           THEN idh_qty_inv
+
+           ELSE idh_qty_inv
+
+       END QuantityInvoiceEA, 
+
+       1 LineCount, 
+
+       idh_price * idh_qty_inv SalesInvoice, 
+
+       idh_std_cost * idh_qty_inv CostInvoice, 
+
+       idh_price Price, 
+
+       pt.pt_price PartPrice, 
+
+       idh.idh_list_pr ListPrice, 
+
+       idh.idh_part Part, 
+
+       idh.idh_nbr SalesOrderNumber, 
+
+       d.CustomShort4 HDBAcctNumber,
+
+       CASE
+
+           WHEN idh_site = '140'
+
+           THEN '140'
+
+           WHEN idh_site = '160'
+
+           THEN '160'
+
+           ELSE '0'
+
+       END SiteCodeWheelingOEM, 
+
+       CAST(CAST(YEAR(ih_inv_date) AS VARCHAR) + RIGHT('0' + CAST(MONTH(ih_inv_date) AS VARCHAR), 2) AS INT) EffectiveExchangeDate
+
+FROM dbo.ih_hist ih(NOLOCK)
+
+     JOIN dbo.idh_hist idh(NOLOCK) ON ih.ih_domain = idh.idh_domain
+
+                                      AND ih.ih_inv_nbr = idh.idh_inv_nbr
+
+                                      AND idh_nbr = ih_nbr
+
+     LEFT JOIN dbo.pt_mstr pt(NOLOCK) ON idh.idh_domain = pt.pt_domain
+
+                                         AND idh.idh_part = pt.pt_part
+
+     LEFT JOIN dbo.ad_mstr ad(NOLOCK) ON ih.ih_domain = ad.ad_domain
+
+                                         AND ih.ih_ship = ad.ad_addr
+
+     LEFT JOIN dbo.cm_mstr cm(NOLOCK) ON ih.ih_domain = cm.cm_domain
+
+                                         AND ih.ih_cust = cm.cm_addr
+
+     LEFT JOIN dbo.BusinessRelation br(NOLOCK) ON cm.cm_slspsn_ex1 = br.BusinessRelationCode
+
+     LEFT JOIN [dbo].[um_mstr] um(NOLOCK) ON ih.ih_domain = um.um_domain
+
+                                             AND idh.idh_um = um.um_um
+
+                                             AND idh.idh_part = um.um_part
+
+                                             AND um.um_alt_um = 'EA'
+
+     LEFT JOIN
+
+(
+
+    SELECT gl_domain, 
+
+           gl_base_curr
+
+    FROM [dbo].[gl_ctrl](NOLOCK)
+
+) ct ON ih.ih_domain = ct.gl_domain
+
+     LEFT JOIN
+
+(
+
+    SELECT ExchangeRateValidDateFrom, 
+
+           ExchangeRateValidDateTill, 
+
+           ct.CurrencyCode, 
+
+           e.ExchangeRate
+
+    FROM [dbo].[ExchangeRate] e(NOLOCK)
+
+         LEFT JOIN [dbo].[ExchangeRateType] et(NOLOCK) ON e.ExchangeRateType_ID = et.ExchangeRateType_ID
+
+         LEFT JOIN Currency ct(NOLOCK) ON e.ToCurrency_ID = ct.Currency_ID
+
+         LEFT JOIN Currency cf(NOLOCK) ON e.FromCurrency_ID = cf.Currency_ID
+
+         LEFT JOIN RoundingMethod r(NOLOCK) ON r.RoundingMethod_ID = ct.RoundingMethod_ID
+
+    WHERE ExchangeRateTypeCode = 'ACCOUNTING'
+
+          AND cf.CurrencyCode = 'USD'
+
+) c ON ih_curr = c.CurrencyCode
+
+       AND ih_inv_date BETWEEN c.ExchangeRateValidDateFrom AND c.ExchangeRateValidDateTill
+
+     LEFT JOIN
+
+(
+
+    SELECT ExchangeRateValidDateFrom, 
+
+           ExchangeRateValidDateTill, 
+
+           ct.CurrencyCode, 
+
+           e.ExchangeRate
+
+    FROM [dbo].[ExchangeRate](NOLOCK) e
+
+         LEFT JOIN [dbo].[ExchangeRateType](NOLOCK) et ON e.ExchangeRateType_ID = et.ExchangeRateType_ID
+
+         LEFT JOIN Currency ct(NOLOCK) ON e.ToCurrency_ID = ct.Currency_ID
+
+         LEFT JOIN Currency cf(NOLOCK) ON e.FromCurrency_ID = cf.Currency_ID
+
+         LEFT JOIN RoundingMethod r(NOLOCK) ON r.RoundingMethod_ID = ct.RoundingMethod_ID
+
+    WHERE ExchangeRateTypeCode = 'BUDGET'
+
+          AND cf.CurrencyCode = 'USD'
+
+) b ON ct.gl_base_curr = b.CurrencyCode
+
+       AND CAST(CAST(YEAR(ih_inv_date) AS VARCHAR) + '-01-01' AS DATE) BETWEEN b.ExchangeRateValidDateFrom AND b.ExchangeRateValidDateTill
+
+     LEFT JOIN
+
+(
+
+    SELECT DebtorshipToCode, 
+
+           CustomShort4
+
+    FROM
+
+    (
+
+        SELECT ROW_NUMBER() OVER(PARTITION BY DebtorshipToCode
+
+               ORDER BY DebtorshipToCode) RowNumber, 
+
+               DebtorshipToCode, 
+
+               CustomShort4
+
+        FROM DebtorShipTo(NOLOCK)
+
+        WHERE CustomShort4 IS NOT NULL
+
+              AND CustomShort4 <> ''
+
+        GROUP BY DebtorshipToCode, 
+
+                 CustomShort4
+
+    ) d
+
+    WHERE RowNumber = 1
+
+) d ON ih.ih_ship = d.DebtorshipToCode
+
+WHERE ih.ih_inv_date >=  '2019-10-01' AND
+
+  ih_domain <> '160USD' 
+
+   AND LEFT(ih_cust, 1) <> 'Z'
+
+   AND NOT EXISTS
+
+   (
+
+   SELECT *
+
+   FROM dbo.ih_hist ih2 (NOLOCK)
+
+   WHERE (ih2.ih_daybook = 'CN-US' AND ih2.ih_rmks  LIKE '%EDC REBATES%')
+
+   and ih.AzureOeKey = ih2.AzureOeKey
+
+   )"

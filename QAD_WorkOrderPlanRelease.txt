@@ -1,0 +1,86 @@
+"SELECT w.[AzureOeKey], 
+       w.[AzureOeDateTime], 
+       w.[AzureOeEventId], 
+       w.[AzureOeActive], 
+       wo_part ItemNumber,
+       --,pt.ItemDescription 
+       wo_nbr WorkOrder, 
+       wo_lot LotId, 
+       wo_line ProductionLine, 
+       wo_site [Site], 
+       wo_status [Status], 
+       wo_ord_date OrderDate, 
+       wo_stat_close_date CompletionDate, 
+       wo_rel_date ReleaseDate, 
+       wo_due_date DueDate, 
+       wo_qty_ord QuantityOrdered,
+       CASE
+           WHEN w.wo_status = 'C'
+           THEN 0
+           ELSE(w.wo_qty_ord - w.wo_qty_comp - w.wo_qty_rjct)
+       END QuantityOpen, 
+       wo_qty_comp QuantityCompleted, 
+       wo_qty_rjct QuantityRejected, 
+       wo_batch Batch, 
+       wo_so_job SalesJob, 
+       wo_vend Supplier, 
+       wo_lot_next LotSerial, 
+       wo_type [Type], 
+       wo_yield_pct YieldPct, 
+       wo_seq [Sequence], 
+       wo_shift [Shift], 
+       wo_routing RoutingCode, 
+       wo_bom_code BOMCode, 
+       s.sct_lbr_tl Labor,
+       CASE
+           WHEN w.wo_status = 'C'
+           THEN 0
+           ELSE(w.wo_qty_ord - w.wo_qty_comp - w.wo_qty_rjct)
+       END * s.sct_lbr_tl ExtLabor,
+       CASE
+           WHEN w.wo_status = 'C'
+           THEN 0
+           ELSE(w.wo_qty_ord - w.wo_qty_comp - w.wo_qty_rjct)
+       END * s.sct_lbr_tl / 16.6 AS LaborHours, 
+       sct_bdn_tl Burden,
+       CASE
+           WHEN w.wo_status = 'C'
+           THEN 0
+           ELSE(w.wo_qty_ord - w.wo_qty_comp - w.wo_qty_rjct)
+       END * sct_bdn_tl AS Absorption, 
+       p.ptp_buyer BuyerPlanner, 
+       GETDATE() InsertDate
+--,ptp.ptp_buyer BuyerPlaner
+FROM wo_mstr w(NOLOCK)
+     LEFT JOIN sct_det s(NOLOCK) ON w.wo_domain = s.sct_domain
+                                    AND w.wo_part = s.sct_part
+                                    AND w.wo_site = s.sct_site
+     LEFT JOIN
+(
+    SELECT DISTINCT 
+           ptp_domain, 
+           ptp_part, 
+           ptp_buyer, 
+           ptp_site
+    FROM ptp_det(NOLOCK)
+    UNION
+    SELECT DISTINCT 
+           pt_domain, 
+           pt_part, 
+           pt_buyer, 
+           pt_site
+    FROM pt_mstr(NOLOCK) a
+    WHERE NOT EXISTS
+    (
+        SELECT *
+        FROM ptp_det(NOLOCK) b
+        WHERE a.pt_domain = b.ptp_domain
+              AND a.pt_part = b.ptp_part
+              AND a.pt_site = b.ptp_site
+    )
+) p ON w.wo_domain = p.ptp_domain
+       AND w.wo_part = p.ptp_part
+       AND w.wo_site = p.ptp_site
+       AND s.sct_site = p.ptp_site
+WHERE wo_status IN('R', 'P')
+     AND sct_sim = 'Standard'"

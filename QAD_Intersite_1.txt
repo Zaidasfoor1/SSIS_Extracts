@@ -1,0 +1,30 @@
+"SELECT 
+mrp_site [Site] 
+,mrp_dataset
+,mrp_part ItemNumber
+ ,mrp_nbr [Order]
+,mrp_line LineId
+,dbo.GetIntersiteOpenOrders(m.mrp_due_date, m.mrp_part, m.mrp_site) IntersiteOpenOrders
+FROM dbo.mrp_det m
+WHERE EXISTS
+(
+    SELECT *
+    FROM
+    (
+        SELECT mrp_part
+        FROM
+        (
+            SELECT mrp_part, 
+                   mrp_site, 
+                   COUNT(1) cnt
+            FROM dbo.mrp_det(NOLOCK)
+            WHERE mrp_domain = '100usd'
+                  AND mrp_site IN('100', '140')
+            GROUP BY mrp_part, 
+                     mrp_site
+        ) x
+        GROUP BY mrp_part
+        HAVING COUNT(1) > 1
+    ) P
+    WHERE m.mrp_part = p.mrp_part
+);"

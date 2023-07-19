@@ -1,0 +1,38 @@
+"select
+pod_sched
+,pod_nbr
+,po_ord_date
+,po_vend
+,ad_sort
+,pod_line
+,pod_site
+,pod_vpart
+,pod_part
+,pt_desc1
+,pt_desc2
+,pod_qty_ord
+,CASE WHEN pod_status = 'x' or pod_status = 'c' then 0 else pod_qty_ord - pod_qty_rcvd END QuantityOpen
+,pod_pur_cost
+,po_curr
+,pod_type
+,po_ex_rate
+,CASE WHEN po_ex_rate <> 0 then (pod_pur_cost / po_ex_rate) else pod_pur_cost END LocalCost
+,pod_um
+,pod_due_date
+,pod_so_job
+,pod_wo_lot
+,'' EdiPo
+,pod_status
+,po_buyer
+,pod_acct
+,pod_cc
+,pod_sub
+,pod_project
+,pod_ers_opt
+,pod_pr_lst_tp
+from 
+pod_det pod (nolock) JOIN pt_mstr pt (nolock) ON pod.pod_part = pt.pt_part
+JOIN po_mstr (nolock) po ON pod.pod_nbr = po.po_nbr
+JOIN vd_mstr vd (nolock) ON po.po_vend = vd.vd_addr
+JOIN ad_mstr ad (nolock) ON po.po_vend = ad.ad_addr
+where pod_status = '' and pod_type <> 'B' and pod_site in ('100','140','160')  "

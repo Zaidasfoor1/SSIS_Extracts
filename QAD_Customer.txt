@@ -1,0 +1,131 @@
+"SELECT b.[CustomerCode], 
+       b.[CustomerName], 
+       b.[CustomerNameSort], 
+       b.[SalespersonCode],
+       CASE
+           WHEN b.Domain = '125GBP'
+           THEN x.SalesPersonName
+           ELSE BusinessRelationName1
+       END [SalesPersonName], 
+       b.[ParentCustomerCode], 
+       b.[AddressTypeCode], 
+       b.[Address1], 
+       b.[Address2], 
+       b.[Telephone], 
+       b.[City], 
+       b.[State], 
+       b.[Zip], 
+       b.[Domain], 
+       b.[Country], 
+       b.[RegionCode], 
+       b.[SiteId], 
+       b.[BusinesRelationCode], 
+       b.[GPOID], 
+       b.[ParentGPOID]
+FROM
+(
+    SELECT
+
+    --c.cm_bill CustomerNameBillCode, 
+    --      c1.cm_sort CustomerNameBillToName, 
+
+    c.cm_addr CustomerCode, 
+    a.ad_sort CustomerName, 
+    c.cm_sort CustomerNameSort, 
+    c.cm_domain Domain, 
+    c.cm_slspsn_ex1 SalespersonCode,
+
+    --a2.ad_name SalesPersonName, 
+
+    br.BusinessRelationName1, 
+    NULL ParentCustomerCode, 
+    a.ad_type AddressTypeCode,
+
+    --sp_addr SalesPersonCode2, 
+
+    a.ad_line1 Address1, 
+    a.ad_line2 Address2, 
+    a.ad_city City, 
+    a.ad_state State, 
+    a.ad_zip Zip, 
+    ct.ctry_country Country, 
+    a.ad_phone Telephone, 
+    c.cm_region RegionCode, 
+    c.cm_site SiteId, 
+    a.ad_addr BusinesRelationCode,
+
+    --c.cm_shipvia ShipVia ,
+    --,c.cm_resale Resale
+    --,c.cm_rmks Remarks 
+    ----,c.cm_partial PartialOK
+    ----,c.cm_pr_list Discount 
+    --c.cm_fix_pr FixedPrice, 
+    --c.cm_class Class, 
+    --c.cm_type Type, 
+    --c.cm_tax_zone TazZone,
+    ----,c.cm_sic SIC
+    ----,c.cm__dec02 SHFee 
+    --c.cm_cr_terms TermCondition, 
+    --c.cm__chr01 UPSAcct, 
+    --a.ad_type SoldtoType, 
+    --a.ad_ref Reference 
+
+    c.cm__chr09 GPOID, 
+    c.cm__chr10 ParentGPOID
+    FROM cm_mstr c(NOLOCK)
+         LEFT JOIN ad_mstr a(NOLOCK) ON c.cm_addr = a.ad_addr
+                                        AND c.cm_domain = a.ad_domain
+         LEFT JOIN cm_mstr c1(NOLOCK) ON c.cm_bill = c1.cm_addr
+                                         AND c.cm_domain = c1.cm_domain
+         LEFT JOIN ctry_mstr(NOLOCK) ct ON a.ad_ctry = ct.ctry_ctry_code
+         LEFT JOIN sp_mstr s(NOLOCK) ON c1.cm_domain = s.sp_domain
+                                        AND c1.cm_slspsn_ex1 = s.sp_addr
+         LEFT JOIN ad_mstr a2(NOLOCK) ON s.sp_domain = a2.ad_domain
+                                         AND s.sp_addr = a2.ad_addr
+         LEFT JOIN dbo.BusinessRelation br(NOLOCK) ON c.cm_slspsn_ex1 = br.BusinessRelationCode
+    WHERE a.ad_type = 'customer'
+    UNION ALL
+    SELECT [ad_addr] CustomerCode, 
+           [ad_name] CustomerName, 
+           [ad_sort] CustomerNameSort, 
+           ad_domain Domain, 
+           c.cm_slspsn_ex1 SalespersonCode, 
+           BusinessRelationName1 SalesPersonName, 
+           [ad_ref] ParentCustomerCode, 
+           [ad_type] AddressTypeCode, 
+           [ad_line1] Address1, 
+           [ad_line2] Address2, 
+           [ad_city] City, 
+           [ad_state] State, 
+           [ad_zip] Zip, 
+           [ad_country] Country, 
+           [ad_phone] Telephone, 
+           NULL RegionCode, 
+           NULL SiteId, 
+           NULL BusinesRelationCode, 
+           NULL GPOID, 
+           NULL ParentGPOID
+    FROM [dbo].[ad_mstr] a
+         LEFT JOIN
+    (
+        SELECT  
+               cm_addr, 
+               MAX(cm_slspsn_ex1) cm_slspsn_ex1
+        FROM cm_mstr
+		GROUP BY cm_addr
+    ) c ON c.cm_addr = a.ad_addr
+         LEFT JOIN dbo.BusinessRelation br(NOLOCK) ON c.cm_slspsn_ex1 = br.BusinessRelationCode
+    WHERE [ad_type] <> 'customer'
+) b
+LEFT JOIN
+(
+    SELECT ad_name SalesPersonName, 
+           ad_type, 
+           cm_addr CustomerCode, 
+           cm_domain Domain
+    FROM cm_mstr c(NOLOCK)
+         JOIN ad_mstr a(NOLOCK) ON c.cm_domain = a.ad_domain
+                                   AND c.cm_slspsn_ex1 = a.ad_addr
+                                   AND c.cm_domain = '125GBP'
+) X ON b.CustomerCode = x.CustomerCode
+       AND b.Domain = x.Domain;"

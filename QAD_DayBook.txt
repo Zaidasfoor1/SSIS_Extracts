@@ -1,0 +1,6 @@
+"SELECT [AzureOeKey]
+      ,[dy_dy_code] JournalCode
+      ,[dy_desc] DayDescription
+      ,[dy_type] DayType
+      ,[dy_domain] Domain
+  FROM [dbo].[dy_mstr] (nolock) "

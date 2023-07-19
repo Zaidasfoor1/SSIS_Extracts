@@ -1,0 +1,3 @@
+"SELECT ih_domain, ih_cust, ih_ship, max(ih_inv_date) ih_inv_date  FROM ih_hist (nolock)
+
+	  GROUP BY  ih_domain, ih_cust, ih_ship "

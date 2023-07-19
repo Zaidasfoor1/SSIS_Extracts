@@ -1,0 +1,45 @@
+"SELECT   
+	h.AzureOeKey, 
+       p.PeriodYearPeriod, 
+       PostingHistMovemntDebitLC, 
+       PostingHistMovemntCreditLC, 
+       PostingHistMovemntDebitLC - PostingHistMovemntCreditLC NetMovementLC, 
+
+       PostingHistMovemntDebitTC, 
+       PostingHistMovemntCreditTC, 
+       PostingHistMovemntDebitTC - PostingHistMovemntCreditTC NetMovementTC, 
+
+       PostingHistMovemntDebitCC, 
+       PostingHistMovemntCreditCC, 
+       PostingHistMovemntDebitCC - PostingHistMovemntCreditCC NetMovementCC, 
+
+       PostingHistMovemntDebitPC, 
+       PostingHistMovemntCreditPC, 
+       PostingHistMovemntDebitPC - PostingHistMovemntCreditPC NetMovementPC, 
+
+       PostingHistMovemntQTY, 
+       g.GLCode, 
+       cc.CostCentreCode, 
+       c.CompanyCode, 
+       l.LayerDescription,
+	   j.JournalTypeCode,
+	   j.JournalDescription,
+	   b.BusinessRelationICCode,
+	   j.LastModifiedUser,
+	   j.LastModifiedDate,
+	    CONVERT(TIME, DATEADD(SECOND, j.LastModifiedTime, 0)) LastModifiedTime
+FROM [dbo].[PostingHist] h(NOLOCK)
+     JOIN GL g(NOLOCK) ON h.GL_ID = g.GL_ID
+     JOIN Layer L(NOLOCK) ON h.Layer_ID = l.Layer_ID
+     LEFT JOIN Journal j(NOLOCK) ON h.Journal_ID = j.Journal_ID
+     LEFT JOIN CostCentre cc(NOLOCK) ON h.CostCentre_ID = cc.CostCentre_ID
+     JOIN Company c(NOLOCK) ON h.Company_ID = c.Company_ID
+     JOIN SharedSet s(NOLOCK) ON g.SharedSet_ID = s.SharedSet_ID
+     JOIN Period p(NOLOCK) ON c.Company_ID = p.Company_ID
+                              AND h.PostingHistYearPeriodFrom = p.PeriodYearPeriod
+	LEFT JOIN BusinessRelation (nolock) b
+  ON h.[IntercoBusinessRelation_ID] = b.BusinessRelation_ID
+WHERE 1 = 1
+      AND s.SharedSetTypeCode = 'GL'
+      AND p.[PeriodTypeCode] = 'NORM'
+      AND h.AzureOeKey > 0 AND p.PeriodYearPeriod >= 190001"

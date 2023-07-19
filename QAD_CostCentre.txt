@@ -1,0 +1,6 @@
+"SELECT [AzureOeKey], 
+       [CostCentre_ID], 
+       [CostCentreCode], 
+       [CostCentreDescription], 
+       [CostCentreIsActive]
+FROM [dbo].[CostCentre] (NOLOCK);"

@@ -1,0 +1,85 @@
+"SELECT cm_addr Customer, 
+       ad_mstr.ad_addr ShipTo, 
+       cm_sort SortName, 
+       co.ad_name ContractOwnerName, 
+       GPOID, 
+       COID, 
+       ad__chr01 GPO, 
+       ad__chr02 IDN, 
+       ad__chr03 RPC, 
+       ad__chr04 Division,
+	   cm_slspsn_ex1 SalespersonCode,
+	   cm__chr04 CAM,
+	   c.BusinessRelationName1 CAMName,
+	   ad__qad05 ShipToName
+FROM ad_mstr(NOLOCK)
+     JOIN DebtorShipTo(NOLOCK) ON ad_addr = DebtorShipToCode
+     JOIN cm_mstr(NOLOCK) ON ad_ref = cm_addr
+                             AND ad_domain = cm_domain
+     LEFT JOIN
+(
+    SELECT ls_addr, 
+           c.ad_name
+    FROM ls_mstr(NOLOCK)
+         JOIN anx_det(NOLOCK) ON anx_code = ls_type
+                                 AND anx_node = ls_addr
+                                 AND anx_domain = ls_domain
+         JOIN
+    (
+        SELECT ad_domain, 
+               ad_addr, 
+               ad_name, 
+               anx_code
+        FROM an_mstr(NOLOCK)
+             JOIN anx_det(NOLOCK) ON an_domain = anx_domain
+                                     AND an_type = anx_type
+                                     AND an_code = anx_code
+             JOIN ad_mstr(NOLOCK) ON ad_domain = an_domain
+                                     AND ad_addr = an_user1
+        GROUP BY ad_domain, 
+                 ad_addr, 
+                 ad_name, 
+                 anx_code
+    ) c ON anx_det.anx_code = c.anx_code
+    WHERE ls_type <> 'Customer'
+          AND ls_type <> 'Ship-To'
+          AND ls_type <> 'Company'
+          AND ls_type <> 'Supplier'
+          AND anx_type = '9'
+    GROUP BY ls_addr, 
+             c.ad_name
+) co ON cm_addr = co.ls_addr
+     LEFT JOIN
+(
+    SELECT ad_addr, 
+	CASE WHEN  CHARINDEX(',', ad__chr05) > 1 THEN
+           LEFT(ad__chr05, CHARINDEX(',', ad__chr05) - 1) 
+		   ELSE ad__chr05
+		   END GPOID, 
+           SUBSTRING(ad__chr05, CHARINDEX(',', ad__chr05) + 1, 50) COID
+    FROM ad_mstr(NOLOCK)
+    WHERE ad_type = 'Ship-To'
+          AND ad__chr05 <> ''
+) gp ON ad_mstr.ad_addr = gp.ad_addr
+LEFT JOIN (select BusinessRelationCode, BusinessRelationName1 from BusinessRelation (nolock)
+ GROUP BY BusinessRelationCode, BusinessRelationName1)b ON cm_slspsn_ex1 = b.BusinessRelationCode
+ LEFT JOIN (select BusinessRelationCode, BusinessRelationName1 from BusinessRelation (nolock)
+ GROUP BY BusinessRelationCode, BusinessRelationName1)c ON cm__chr04 = c.BusinessRelationCode
+
+GROUP BY cm_addr, 
+         ad_mstr.ad_addr, 
+         cm_sort, 
+         co.ad_name, 
+         GPOID, 
+         COID, 
+         ad__chr01, 
+         ad__chr02, 
+         ad__chr03, 
+         ad__chr04,
+		 b.BusinessRelationName1,
+		 cm_slspsn_ex1,
+		 cm__chr04,
+		 b.BusinessRelationCode,
+	     c.BusinessRelationName1,
+	     c.BusinessRelationCode,
+		 ad__qad05"

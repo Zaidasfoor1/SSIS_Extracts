@@ -1,0 +1,90 @@
+"/**Sales Order Detail US Modify for EMEA 10/19/2021 **/
+SELECT
+sod_det.sod_domain DomainCode
+ ,cm_mstr.cm_region Region
+,  cm_mstr.cm_slspsn_ex1 Salesperson
+, ad_mstr_sales.ad_name  AccountManager 
+,  so_mstr.so_ord_date OrderDate
+--,  so_mstr.so_compl_stat CompleteStatus
+,  sod_det.sod_due_date  DueDate
+, so_mstr.so_stat Hold  
+--,  sod_det.sod_promise_date Promise
+,  so_mstr.so_cust 'Sold-To'
+,  cm_mstr.cm_sort 'CustomerName' 
+--,  sod_det.sod_line 'SalesOrderLine'
+,  sod_det.sod_part  'ItemNumber'
+,pt_mstr.pt_desc1 + pt_mstr.pt_desc2 'Description'  
+,  sod_det.sod_qty_ord - sod_det.sod_qty_ship 'QtyOpen'
+--,  sod_det.sod_qty_all 'QtyAllocated'
+,  sod_det.sod_um 'UM'
+,  sod_det.sod_price 'Price'
+, case WHEN um.um_part IS NOT NULL
+                     AND sod_um <> 'EA'
+                THEN sod_qty_ord / um.um_conv
+                WHEN um2.um_part IS NOT NULL
+                     AND sod_um <> 'EA'
+                THEN sod_qty_ord * um2.um_conv
+                WHEN(um.um_part IS NULL
+                     OR sod_qty_ord IS NULL)
+                THEN sod_qty_ord
+                ELSE sod_qty_ord
+   END 'Quantity_EA',
+, (sod_det.sod_qty_ord - sod_det.sod_qty_ship)*sod_det.sod_price 'ExtPrice'
+, (sod_qty_ord - sod_det.sod_qty_ship) *sod_price 'ExtPriceTC'
+ ,so_mstr.so_curr 'Curr'
+ , so_mstr.so_ex_rate2 'ExchRate2' 
+, ((sod_qty_ord - sod_det.sod_qty_ship) * sod_det.sod_price) * (so_mstr.so_ex_rate2)'ExtPriceBC'
+,so_mstr.so_curr 'BaseCurr' 
+,  pt_mstr.pt_promo  'Focus Grp' 
+,  so_mstr.so_ship 'Ship-To'
+,  ad_mstr_ship.ad_name  'Shipto Name' 
+,  ad_mstr_ship.ad_line1 'Address Line1' 
+,  ad_mstr_ship.ad_line2 'Address Line2' 
+,  ad_mstr_ship.ad_city  'City'
+--,  ad_mstr_ship.ad_state  'State'
+,  ad_mstr_ship.ad_ctry 'Country'
+,  so_mstr.so_nbr 'SalesOrder'
+,  so_mstr.so_po 'PurchaseOrder'
+--,  so_mstr.so_stat 'Status'  
+--,  so_mstr.so_rmks 'Remarks'
+
+FROM
+sod_det (nolock) JOIN  so_mstr  (nolock) ON sod_det.sod_domain = so_mstr.so_domain AND sod_nbr = so_nbr
+JOIN pt_mstr (nolock)  ON sod_domain = pt_domain and sod_part = pt_part-- WHERE sod_nbr = '1855049'
+JOIN ad_mstr ad_mstr_ship (nolock) ON ad_domain = so_domain AND ad_addr = so_ship --whERE sod_nbr = '1855049'
+JOIN um_mstr(Nolock) ON um_domain = sod_domain and um_part = sod_part and um_alt_um = sod_um
+LEFT JOIN cm_mstr  (nolock) ON so_domain = cm_domain and so_cust = cm_addr  --WHERE sod_nbr = '1855049'
+LEFT JOIN ad_mstr ad_mstr_sales (nolock) ON ad_mstr_sales.ad_domain = so_domain AND ad_mstr_sales.ad_addr = cm_mstr.cm_slspsn_ex1 --whERE sod_nbr = '1855049'
+LEFT JOIN [dbo].[um_mstr] um(NOLOCK) ON sod_domain = um.um_domain
+                                                  AND sod_um = um.um_um
+                                                  AND sod_part = um.um_part
+                                                  AND um.um_alt_um = 'EA'
+	 LEFT JOIN
+     (
+         SELECT um_domain, 
+                um_part, 
+                um_alt_um, 
+                um_conv
+         FROM [dbo].[um_mstr](NOLOCK)
+         WHERE(um_alt_um <> 'EA'
+               AND um_um = 'EA')
+         GROUP BY um_domain, 
+                  um_part, 
+                  um_alt_um, 
+                  um_conv
+     ) um2 ON sod_domain = um2.um_domain
+              AND sod_um = um2.um_alt_um
+              AND sod_part = um2.um_part
+              AND um2.um_alt_um <> 'EA'
+  WHERE 
+  sod_det.sod_domain IN ('100USD','400EUR','420DKK','430SEK','440EUR','450NOK','460EUR','470EUR','480EUR')
+   and so_mstr.so_cust = cm_mstr.cm_addr
+   and LEFT(so_mstr.so_cust,1) <> 'Z'
+   and cm_mstr.cm_region>=4001
+   and cm_mstr.cm_region<=4998
+   --#and c_slspsn1<>'12100000'
+   --#and sod_det:sod_prodline<>''
+   and sod_det.sod_price<>0
+   and (sod_qty_ord - sod_det.sod_qty_ship)  <> 0 --qty_open
+   and so_mstr.so_compl_stat <> '01'
+"

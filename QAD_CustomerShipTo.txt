@@ -1,0 +1,32 @@
+"WITH Customer_CTE (RowNumber, ls_domain, ls_addr
+								 ,ad_line1
+								 ,ad_line2
+								 ,ad_city
+								 ,ad_state
+								 ,ad_zip
+								 ,ad_ctry
+								 )
+AS
+(select  
+							  ROW_NUMBER() OVER(Partition by ls_addr ORDER BY ls_addr) AS RowNumber,
+							 ls_domain, ls_addr
+								 ,ad_line1
+								 ,ad_line2
+								 ,ad_city
+								 ,ad_state
+								 ,ad_zip
+								 ,ad_ctry
+							 FROM [dbo].[ad_mstr] (nolock) JOIN ls_mstr ON ad_domain = ls_domain and ad_addr = ls_addr
+							-- where 1=1
+							-- and ls_addr IN ('11803400','11896400','11553900')
+							)
+SELECT  RowNumber,
+							 ls_domain, ls_addr
+								 ,ad_line1
+								 ,ad_line2
+								 ,ad_city
+								 ,ad_state
+								 ,ad_zip
+								 ,ad_ctry
+FROM   Customer_CTE
+ WHERE RowNumber = 1"
