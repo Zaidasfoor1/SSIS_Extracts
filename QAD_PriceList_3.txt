@@ -69,7 +69,9 @@
             c.ContractType, 
             c.ContractName, 
             d.code_cmmt ContractOwnerName, 
-            cm.cm_slspsn_ex1 TMCode
+            cm.cm_slspsn_ex1 TMCode,
+	    c.Committed,
+	    c.CommittedNotes
      FROM [dbo].[pi_mstr] p(NOLOCK)
           LEFT JOIN pid_det pd(NOLOCK) ON p.pi_domain = pd.pid_domain
                                           AND p.pi_list_id = pd.pid_list_id
@@ -101,6 +103,18 @@
 				    WHEN an__qadc01 like '%,Y,%' or CHARINDEX(',', an__qadc01, 1) > 0 
 		            THEN SUBSTRING(an__qadc01, CHARINDEX(',', an__qadc01) + 1, CHARINDEX(',', an__qadc01, CHARINDEX(',', an__qadc01) + 1) - CHARINDEX(',', an__qadc01) -1)
                 END ContractName, 
+				 CASE
+		            WHEN an__qadc01 like '%,N,%'
+		            THEN 'N'
+		            WHEN an__qadc01 like '%,Y,%'
+		            THEN 'Y'
+		         ELSE 'N'
+	            END Committed,
+				CASE
+				   WHEN an__qadc01 like '%,Y,%'
+				   THEN SUBSTRING(an__qadc01, LEN(an__qadc01) -  CHARINDEX(',Y,',REVERSE(an__qadc01)) + 2  , LEN(an__qadc01))
+				   ELSE Null
+				END CommittedNotes,
                 MAX(an_mod_date) MaxDate
          FROM an_mstr(NOLOCK)
          WHERE an_type = '9'
@@ -165,7 +179,14 @@ SELECT an_user1,  CASE
 				    WHEN an__qadc01 like '%,Y,%' or CHARINDEX(',', an__qadc01, 1) > 0 
 		            THEN SUBSTRING(an__qadc01, CHARINDEX(',', an__qadc01) + 1, CHARINDEX(',', an__qadc01, CHARINDEX(',', an__qadc01) + 1) - CHARINDEX(',', an__qadc01) -1)
            ELSE 'PPA-Local'
-       END ContOwner
+       END ContOwner,
+				CASE
+		            WHEN an__qadc01 like '%,N,%'
+		            THEN 'N'
+		            WHEN an__qadc01 like '%,Y,%'
+		            THEN 'Y'
+		         ELSE 'N'
+	            END Committed
 	   FROM
 an_mstr (nolock) where  an_type = '9')ct ON  p.pi_cs_code= ct.an_user1
 
