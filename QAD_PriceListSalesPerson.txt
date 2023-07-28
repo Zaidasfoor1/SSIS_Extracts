@@ -85,6 +85,18 @@ FROM
 
     cm_region Region, 
     cm_slspsn_ex1 SalesPersonCode,
+						 CASE
+		            WHEN an__qadc01 like '%,N,%'
+		            THEN 'N'
+		            WHEN an__qadc01 like '%,Y,%'
+		            THEN 'Y'
+		         ELSE 'N'
+	            END Committed,
+				CASE
+				   WHEN an__qadc01 like '%,Y,%'
+				   THEN SUBSTRING(an__qadc01, LEN(an__qadc01) -  CHARINDEX(',Y,',REVERSE(an__qadc01)) + 2  , LEN(an__qadc01))
+				   ELSE Null
+				END CommittedNotes,
     CASE
         WHEN an__qadc01 = NULL
              AND cm_region >= '1101'
@@ -184,6 +196,18 @@ FROM
 
     cm_region, 
     cm_slspsn_ex1,
+						 CASE
+		            WHEN an__qadc01 like '%,N,%'
+		            THEN 'N'
+		            WHEN an__qadc01 like '%,Y,%'
+		            THEN 'Y'
+		         ELSE 'N'
+	            END Committed,
+				CASE
+				   WHEN an__qadc01 like '%,Y,%'
+				   THEN SUBSTRING(an__qadc01, LEN(an__qadc01) -  CHARINDEX(',Y,',REVERSE(an__qadc01)) + 2  , LEN(an__qadc01))
+				   ELSE Null
+				END CommittedNotes,
     CASE
         WHEN CHARINDEX(',', an__qadc01) > 0
         THEN LEFT(an__qadc01, CHARINDEX(',', an__qadc01) - 1)
@@ -264,6 +288,18 @@ FROM
 
     cm_region, 
     cm_slspsn_ex1,
+						 CASE
+		            WHEN an__qadc01 like '%,N,%'
+		            THEN 'N'
+		            WHEN an__qadc01 like '%,Y,%'
+		            THEN 'Y'
+		         ELSE 'N'
+	            END Committed,
+				CASE
+				   WHEN an__qadc01 like '%,Y,%'
+				   THEN SUBSTRING(an__qadc01, LEN(an__qadc01) -  CHARINDEX(',Y,',REVERSE(an__qadc01)) + 2  , LEN(an__qadc01))
+				   ELSE Null
+				END CommittedNotes,
     CASE
         WHEN cm_region >= '1101'
              AND cm_region <= '1106'
@@ -299,7 +335,21 @@ FROM
          ) d
          WHERE RowNumber = 1
      ) d ON DebtorShipToCode = ad_addr
-         JOIN
+	          JOIN anx_det(NOLOCK) ON anx_domain = ad_domain
+                                 AND anx_type = '9'
+                                 AND anx_node = ad_ref
+                                 AND anx_active = 1
+     JOIN
+    (
+        SELECT an_domain, 
+               an_type, 
+               an_code, 
+               an__qadc01
+        FROM @an_mstr
+    ) a ON an_domain = anx_domain
+           AND an_type = anx_type
+           AND an_code = anx_code
+       JOIN
     (
         SELECT pi_domain, 
                pi_list, 
