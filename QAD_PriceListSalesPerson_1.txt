@@ -164,8 +164,10 @@ FROM
         THEN LEFT(an__qadc01, CHARINDEX(',', an__qadc01) - 1)
     END ContractType,
     CASE
-        WHEN CHARINDEX(',', an__qadc01) > 0
-        THEN SUBSTRING(an__qadc01, CHARINDEX(',', an__qadc01) + 1, 80)
+        -WHEN CHARINDEX(',', an__qadc01) > 0
+        --THEN SUBSTRING(an__qadc01, CHARINDEX(',', an__qadc01) + 1, 80)
+		WHEN an__qadc01 like '%,Y,%' or CHARINDEX(',', an__qadc01, 1) > 0 
+	    THEN SUBSTRING(an__qadc01, CHARINDEX(',', an__qadc01) + 1, CHARINDEX(',', an__qadc01, CHARINDEX(',', an__qadc01) + 1) - CHARINDEX(',', an__qadc01) -1)
     END ContractName,
 	cm_slspsn_ex2 VCCode
     FROM ad_mstr(NOLOCK) --20936
@@ -225,6 +227,10 @@ FROM
         WHEN cm_region >= '1101'
              AND cm_region <= '1105'
         THEN 'PPA-Local'
+        --WHEN CHARINDEX(',', an__qadc01) > 0
+        --THEN SUBSTRING(an__qadc01, CHARINDEX(',', an__qadc01) + 1, 80)
+		 WHEN an__qadc01 like '%,Y,%' or CHARINDEX(',', an__qadc01, 1) > 0 
+		 THEN SUBSTRING(an__qadc01, CHARINDEX(',', an__qadc01) + 1, CHARINDEX(',', an__qadc01, CHARINDEX(',', an__qadc01) + 1) - CHARINDEX(',', an__qadc01) -1)
     END ContractName,
 	cm_slspsn_ex2 VCCode
     FROM ad_mstr(NOLOCK)
