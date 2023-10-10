@@ -120,41 +120,47 @@
 
        --spt.spt_sim CostSet,
 
-       CASE
+	  CASE
 
-           WHEN year(ih_inv_date) = 2023
+				WHEN year(ih_inv_date) = 2023 and spt.spt_element is not null
 
-	   THEN (Select spt.spt_sim
+				THEN spt.spt_sim
 
-		 Where spt.spt_sim = 'Standard'
+				WHEN year(ih_inv_date) = 2022 and spt1.spt_element is not null
 
-		 and spt.spt_element = 'transfer')
+				THEN spt1.spt_sim
 
-	   WHEN year(ih_inv_date) = 2022
+				ELSE Null
 
-           THEN (Select spt.spt_sim
-
-		 Where spt.spt_sim = '2022STD'
-
-		 and spt.spt_element = 'transfer')
-
-           ELSE spt.spt_sim
-
-       END CostSet,
+	  END CostSet,
 
        CASE
 
            WHEN ct.gl_base_curr <> [ih_curr]
 
-           THEN([spt_cst_tl] * idh_qty_inv) / ih_ex_rate2
+           THEN(spt.[spt_cst_tl] * idh_qty_inv) / ih_ex_rate2
 
            WHEN ih_curr = 'USD'
 
-           THEN([spt_cst_tl] * idh_qty_inv)
+           THEN(spt.[spt_cst_tl] * idh_qty_inv)
 
-           ELSE([spt_cst_tl] * idh_qty_inv) / c.ExchangeRate
+           ELSE(spt.[spt_cst_tl] * idh_qty_inv) / c.ExchangeRate
 
        END TransferCost,
+
+	   CASE
+
+                WHEN ct.gl_base_curr <> [ih_curr]
+
+                THEN(spt1.[spt_cst_tl] * idh_qty_inv) / ih_ex_rate2
+
+                WHEN ih_curr = 'USD'
+
+                THEN(spt1.[spt_cst_tl] * idh_qty_inv)
+
+                ELSE(spt1.[spt_cst_tl] * idh_qty_inv) / c.ExchangeRate
+
+       END TransferCostPrior,
 
        CASE
 
@@ -334,39 +340,41 @@ FROM dbo.ih_hist ih(NOLOCK)
 
                                              AND um.um_alt_um = 'EA'
      LEFT JOIN 
-
- (
-
+	 (
 		Select [spt_sim]
-
 			  ,[spt_part]
-
 			  ,[spt_element]
-
 			  ,[spt_cst_tl]
-
 			  ,[spt_site]
-
 			  ,[spt_domain]
-
 			  ,[oid_spt_det]
-
 			  ,[spt_mod_date]
-
 		FROM spt_det (NOLOCK) 
-
-		WHERE (spt_sim in ('standard', '2022STD')
-
-			     and spt_element = 'transfer')
-
+		WHERE (spt_sim = 'standard'
+			     and spt_element = 'transfer'
+				 and year(spt_mod_date) in (2023))
 	) spt ON spt.spt_domain = ih_domain
-
 			   AND spt.spt_site = ih_site
-
 			   AND spt.spt_part = idh_part
-
 			   AND year(ih.ih_inv_date) = year(spt.spt_mod_date)
-
+	 LEFT JOIN 
+	 (
+		Select [spt_sim]
+			  ,[spt_part]
+			  ,[spt_element]
+			  ,[spt_cst_tl]
+			  ,[spt_site]
+			  ,[spt_domain]
+			  ,[oid_spt_det]
+			  ,[spt_mod_date]
+		FROM spt_det (NOLOCK) 
+		WHERE (spt_sim = '2022STD'
+			     and spt_element = 'transfer'
+				 and year(spt_mod_date) in (2022))
+	) spt1 ON spt1.spt_domain = ih_domain
+			   AND spt1.spt_site = ih_site
+			   AND spt1.spt_part = idh_part
+			   AND year(ih.ih_inv_date) = year(spt1.spt_mod_date)
 
      LEFT JOIN
 
