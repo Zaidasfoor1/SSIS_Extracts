@@ -42,8 +42,8 @@
 FROM sod_det(NOLOCK)
      JOIN so_mstr(NOLOCK) ON sod_det.sod_domain = so_mstr.so_domain
                              AND sod_nbr = so_nbr
-	 JOIN um_mstr(NOLOCK) ON um_domain = sod_domain 
-							 AND um_part = sod_part and um_alt_um = sod_um
+	 --LEFT JOIN um_mstr(NOLOCK) ON um_domain = sod_domain 
+		--					 AND um_part = sod_part and um_alt_um = sod_um
      JOIN pt_mstr(NOLOCK) ON sod_domain = pt_domain
                              AND sod_part = pt_part
      JOIN ad_mstr ad_mstr_ship(NOLOCK) ON ad_domain = so_domain
