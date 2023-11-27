@@ -16,10 +16,12 @@
        END ContOwner, 
        replace(an__qadc01, ',N,', '') ContTypeContOwner, --Contract,HPG Biopsy (if this blank exclude)
        an_user2, --HPG 7030 --contract
-       an_code, --HPGBIOT1
+       an.an_code, --HPGBIOT1
        an__qadd01 Fee, --3.0000000000
        ad_name, --Chip Bock
-       code_cmmt --Chip Bock
+       code_cmmt, --Chip Bock
+	   c.Committed,
+	   c.CommittedNotes
 FROM anx_det anx(NOLOCK)
      JOIN an_mstr an(NOLOCK) ON an_domain = anx_domain
                                 AND an_type = anx_type
@@ -30,6 +32,37 @@ FROM anx_det anx(NOLOCK)
      LEFT JOIN ad_mstr(NOLOCK) ON ad_addr = an_user1
      LEFT JOIN code_mstr(NOLOCK) ON code_fldname = 'xxContractOwner'
                                     AND code_value = an_user1
+	 JOIN
+     (
+         SELECT an_code,
+                CASE
+                    WHEN CHARINDEX(',', an__qadc01) > 0
+                    THEN LEFT(an__qadc01, CHARINDEX(',', an__qadc01) - 1)
+                END ContractType,
+                CASE
+                   --WHEN CHARINDEX(',', an__qadc01) > 0
+                    --THEN SUBSTRING(replace(replace(an__qadc01, ',N,', ''), ',Y,', ''), CHARINDEX(',', an__qadc01) + 1, 80)
+				    WHEN an__qadc01 like '%,Y,%' or CHARINDEX(',', an__qadc01, 1) > 0 
+		            THEN SUBSTRING(an__qadc01, CHARINDEX(',', an__qadc01) + 1, CHARINDEX(',', an__qadc01, CHARINDEX(',', an__qadc01) + 1) - CHARINDEX(',', an__qadc01) -1)
+                END ContractName, 
+				 CASE
+		            WHEN an__qadc01 like '%,N,%'
+		            THEN 'N'
+		            WHEN an__qadc01 like '%,Y,%'
+		            THEN 'Y'
+		         ELSE 'N'
+	            END Committed,
+				CASE
+				   WHEN an__qadc01 like '%,Y,%'
+				   THEN SUBSTRING(an__qadc01, LEN(an__qadc01) -  CHARINDEX(',Y,',REVERSE(an__qadc01)) + 2  , LEN(an__qadc01))
+				   ELSE Null
+				END CommittedNotes,
+                MAX(an_mod_date) MaxDate
+         FROM an_mstr(NOLOCK)
+         WHERE an_type = '9'
+         GROUP BY an_code, 
+                  an__qadc01
+     ) c ON pi_list = c.an_code
 WHERE anx_type = '9'
       AND pi_cs_type = '9'
       AND pi_part_type = '6'
