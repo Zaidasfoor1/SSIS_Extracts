@@ -120,6 +120,12 @@ FROM
        ad__chr03 RPC,
        ad__chr04 Division,
        ad__qad05 PricingShipToName,
+	   ad_line1 Address_1,                
+	   ad_line2 Address_2,
+       ad_line3 Address_3,
+       ad_city City,
+       ad_state State,
+       ad_zip Postal_Code,
 	cm_slspsn_ex2 VCCode
 
     --pi_list, anx_node, ad_addr, pi_start, pi_expire
@@ -230,6 +236,12 @@ FROM
        ad__chr03 RPC,
        ad__chr04 Division,
        ad__qad05 PricingShipToName,
+	   ad_line1 Address_1,                
+	   ad_line2 Address_2,
+       ad_line3 Address_3,
+       ad_city City,
+       ad_state State,
+       ad_zip Postal_Code,
 	cm_slspsn_ex2 VCCode
     FROM ad_mstr(NOLOCK) --20936
 
@@ -329,6 +341,12 @@ FROM
        ad__chr03 RPC,
        ad__chr04 Division,
        ad__qad05 PricingShipToName,
+	   ad_line1 Address_1,                
+	   ad_line2 Address_2,
+       ad_line3 Address_3,
+       ad_city City,
+       ad_state State,
+       ad_zip Postal_Code,
 	cm_slspsn_ex2 VCCode
     FROM ad_mstr(NOLOCK)
          JOIN cm_mstr(NOLOCK) ON cm_domain = ad_domain
