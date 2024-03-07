@@ -122,11 +122,11 @@
 
 	  CASE
 
-				WHEN year(ih_inv_date) = 2023 and spt.spt_element is not null
+				WHEN year(ih_inv_date) = 2024 and spt.spt_element is not null
 
 				THEN spt.spt_sim
 
-				WHEN year(ih_inv_date) = 2022 and spt1.spt_element is not null
+				WHEN year(ih_inv_date) = 2023 and spt1.spt_element is not null
 
 				THEN spt1.spt_sim
 
@@ -352,7 +352,7 @@ FROM dbo.ih_hist ih(NOLOCK)
 		FROM spt_det (NOLOCK) 
 		WHERE (spt_sim = 'standard'
 			     and spt_element = 'transfer'
-				 and year(spt_mod_date) in (2023))
+				 and year(spt_mod_date) in (2024))
 	) spt ON spt.spt_domain = ih_domain
 			   AND spt.spt_site = ih_site
 			   AND spt.spt_part = idh_part
@@ -368,9 +368,9 @@ FROM dbo.ih_hist ih(NOLOCK)
 			  ,[oid_spt_det]
 			  ,[spt_mod_date]
 		FROM spt_det (NOLOCK) 
-		WHERE (spt_sim = '2022STD'
+		WHERE (spt_sim in ('2023STD', '2023PLAN')
 			     and spt_element = 'transfer'
-				 and year(spt_mod_date) in (2022))
+				 and year(spt_mod_date) in (2023))
 	) spt1 ON spt1.spt_domain = ih_domain
 			   AND spt1.spt_site = ih_site
 			   AND spt1.spt_part = idh_part
