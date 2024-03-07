@@ -1,9 +1,15 @@
-"select DISTINCT TOP 100000
+"DECLARE @FLDNAME AS VARCHAR(100) = 'xxpt_mkt_class'
+
+select DISTINCT 
   m.[xxpt_mkt_division] Division
      -- ,CASE WHEN m.[xxpt_mkt_segment] = 'GUIDEWIREACCESS' THEN 'GUIDEWIREACCESSORIES' ELSE m.[xxpt_mkt_segment] END Segment
        ,CASE WHEN m.[xxpt_mkt_segment] = 'GUIDEWIREACCESS' THEN 'GUIDEWIRE/ACCESSORIES' ELSE m.[xxpt_mkt_segment] END Segment
 	  --, m.[xxpt_mkt_segment] Segment
 	  ,cm.code_cmmt Category
-    FROM dbo.[xxpt_mstr] m  (nolock) LEFT JOIN dbo.[code_mstr] cm (nolock) ON m.xxpt_mkt_class = cm.code_value
+	  ,MAX(CAST(m.xxpt_mkt_logi_ex5 as varchar(30))) NPDFlag
+    FROM dbo.[xxpt_mstr] m  (nolock) LEFT JOIN dbo.[code_mstr] cm (nolock) ON m.xxpt_mkt_class = cm.code_value and @FLDNAME = cm.code_fldname
 	WHERE [xxpt_mkt_division] IS NOT NULL
-	AND  m.[xxpt_mkt_segment] IS NOT NULL" 
+	AND m.[xxpt_mkt_segment] IS NOT NULL
+	GROUP BY m.[xxpt_mkt_division],
+			 m.[xxpt_mkt_segment],
+			 cm.code_cmmt"
