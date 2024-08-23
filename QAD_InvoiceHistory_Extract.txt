@@ -99,17 +99,17 @@ SELECT ih.AzureOeKey [AzureOeKey_ih],
 	   END CostSet,
        CASE
            WHEN ct.gl_base_curr <> [ih_curr]
-           THEN(spt.[spt_cst_tl] * idh_qty_inv) / ih_ex_rate2
+           THEN(TRY_CAST(spt.[spt_cst_tl] AS DECIMAL(12, 0)) * idh_qty_inv) / ih_ex_rate2
            WHEN ih_curr = 'USD'
-           THEN(spt.[spt_cst_tl] * idh_qty_inv)
-           ELSE(spt.[spt_cst_tl] * idh_qty_inv) / c.ExchangeRate
+           THEN(TRY_CAST(spt.[spt_cst_tl] AS DECIMAL(12, 0)) * idh_qty_inv)
+           ELSE(TRY_CAST(spt.[spt_cst_tl] AS DECIMAL(12, 0)) * idh_qty_inv) / c.ExchangeRate
        END TransferCost,
 	   CASE
        WHEN ct.gl_base_curr <> [ih_curr]
-                THEN(spt1.[spt_cst_tl] * idh_qty_inv) / ih_ex_rate2
+                THEN(TRY_CAST(spt1.[spt_cst_tl] AS DECIMAL(12, 0)) * idh_qty_inv) / ih_ex_rate2
                 WHEN ih_curr = 'USD'
-                THEN(spt1.[spt_cst_tl] * idh_qty_inv)
-                ELSE(spt1.[spt_cst_tl] * idh_qty_inv) / c.ExchangeRate
+                THEN(TRY_CAST(spt1.[spt_cst_tl] AS DECIMAL(12, 0)) * idh_qty_inv)
+                ELSE(TRY_CAST(spt1.[spt_cst_tl] AS DECIMAL(12, 0)) * idh_qty_inv) / c.ExchangeRate
        END TransferCostPrior,
        CASE
            WHEN ih_curr = 'USD'
@@ -193,6 +193,8 @@ SELECT ih.AzureOeKey [AzureOeKey_ih],
 	   ,cte.PromoPrice
 	   ,cm.[cm_slspsn_ex2] VascularConsultant
 	   ,vc.SalespersonName VascularConsultantName
+	   ,cm.[cm_slspsn_ex3] VascularConsultant2
+	   ,vc2.SalespersonName VascularConsultantName2
 FROM dbo.ih_hist ih(NOLOCK)
      LEFT JOIN dbo.idh_hist idh(NOLOCK) ON ih.ih_domain = idh.idh_domain
                                       AND ih.ih_inv_nbr = idh.idh_inv_nbr
@@ -333,6 +335,18 @@ where a.ad_addr = c.cm_slspsn_ex1)
              WHERE a.ad_addr = c.cm_slspsn_ex1
          )
      ) vc ON cm.cm_slspsn_ex2 = vc.ad_addr 
+  LEFT JOIN
+     (
+         SELECT DISTINCT ad_addr, 
+                ad_name SalespersonName
+         FROM ad_mstr(NOLOCK) a
+         WHERE EXISTS
+         (
+             SELECT *
+             FROM cm_mstr(NOLOCK) c
+             WHERE a.ad_addr = c.cm_slspsn_ex3
+         )
+     ) vc2 ON cm.cm_slspsn_ex3 = vc2.ad_addr 
 WHERE ih.ih_inv_date >= '"  +   @[$Package::prmInvoiceDateDelta]      +   "'
       AND ih_domain <> '160USD'
       AND LEFT(ih_cust, 1) <> 'Z'

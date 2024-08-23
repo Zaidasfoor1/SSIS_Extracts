@@ -2,7 +2,7 @@
 (
 SELECT xxsg_legal Domain, 
        xxsg_region RegionCode, 
-       xxsg_gdesc Geography, 
+       CASE WHEN code_value = '2121' THEN 'Taiwan' WHEN code_domain = '530CNY' THEN 'China' ELSE xxsg_gdesc END Geography, 
        code_cmmt RegionName, 
        xxsg_mkt_hier2 MarketHierarchy
 	   --ROW_NUMBER()OVER(Partition By xxsg_region, xxsg_legal Order By xxsg_region, xxsg_mkt_hier2 DESC)As GeographyGroup
@@ -25,7 +25,7 @@ UNION ALL
 
  SELECT code_domain, 
            code_value RegionCode, 
-		   CASE WHEN (code_value BETWEEN '3000' and  '4999') OR (code_domain = '125GBP')  THEN 'EMEA' ELSE 'NA#' END AS [Geography],
+		   CASE WHEN (code_value BETWEEN '3000' and  '4999') OR (code_domain = '125GBP')  THEN 'EMEA' WHEN code_domain = '530CNY' THEN 'China' ELSE 'NA#' END AS [Geography],
            code_cmmt RegionName,
 		   NULL MarketHierarchy
     FROM code_mstr c
@@ -58,4 +58,11 @@ SELECT '550USD' Domain
 	,'' RegionCode
 	,'Hong Kong' Geography
 	,'' RegionName
-	,'' MarketHierarchy"
+	,'' MarketHierarchy
+UNION ALL
+
+SELECT '100USD' Domain
+	,'1106' RegionCode
+	,'US PICC' Geography
+	,'Mid Atlantic Region' RegionName
+	,'PICCMidlineCath' MarketHierarchy"
